@@ -12,4 +12,5 @@ class SignalQueries:
     created_by) 
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-    RETRIEVE_SIGNAL = "SELECT MAX(version) as max_version FROM opt360_signals WHERE id = %s AND feature_id = %s"
+    RETRIEVE_SIGNAL_VERSION = "SELECT MAX(version) as max_version FROM opt360_signals WHERE id = %s AND feature_id = %s"
+    RETRIEVE_SIGNAL_ACTIVE = "SELECT * FROM opt360_signals WHERE feature_id = %s and active = true"  

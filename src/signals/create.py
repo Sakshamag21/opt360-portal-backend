@@ -63,7 +63,7 @@ def create_signal(request: dict) -> Response :
     
 
 def check_signal_exists(signal_id: str, feature_id: str) -> Optional[List[Dict[str, Any]]]:
-    query = Queries.RETRIEVE_SIGNAL
+    query = Queries.RETRIEVE_SIGNAL_VERSION
     params = (signal_id, feature_id)
     result = db.execute_query(query, params)
     return result
