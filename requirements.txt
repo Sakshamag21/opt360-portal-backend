@@ -1,5 +1,3 @@
 fastapi[standard]
 uvicorn
-os
-operator360
 mysql-connector-python
