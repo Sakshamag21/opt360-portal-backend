@@ -1,6 +1,6 @@
 database:
-  host: localhost
-  port: 5432
-  username: user
-  password: password
-  name: operator360
+  host: 10.10.75.202
+  port: 3306
+  username: su01
+  password: su01
+  name: data_platform
