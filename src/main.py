@@ -19,4 +19,4 @@ def get_signal_info(feature_id: str):
     return info.get_feature_signals(feature_id=feature_id)
 
 if __name__ == "__main__": 
-    uvicorn.run("main:app", host="0.0.0.0", port=port, log_level="info")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info")
