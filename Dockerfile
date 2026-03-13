@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir \
     --upgrade pip && \
     pip install --no-cache-dir \
     --root-user-action=ignore \
-    -i http://10.10.206.59:8080/repository/pypi-local/simple \
+    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
     --trusted-host 10.10.206.59 \
     -r requirements.txt
 
