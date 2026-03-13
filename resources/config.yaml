@@ -4,3 +4,6 @@ database:
   username: su01
   password: su01
   name: data_platform
+  tables:
+    feature_registry: opt360_features
+    signal_registry: opt360_signals

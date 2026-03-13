@@ -1,22 +1,21 @@
 from fastapi import FastAPI
 import uvicorn
-from config.config import config
-import signals.create as create
+import os
 
-app = FastAPI()
-@app.get("/")
-def read_root():
-    db_config = config.database
-    return {"host": db_config.get("host", "No host found in config")}
+from routes import routers
 
-@app.post("/signal/create")
-def create_signal(request: dict):
+# Initialize FastAPI application
+app = FastAPI(
+    title="Operator360 API",
+    description="API for managing signals and features in Operator360 system",
+    version="1.0.0"
+)
 
-    return create.create_signal(request=request)
-@app.get("/signal/info/{feature_id}")
-def get_signal_info(feature_id: str):
-    import signals.info as info
-    return info.get_feature_signals(feature_id=feature_id)
+# Include all routers with /api prefix
+for router in routers:
+    app.include_router(router, prefix="/api")
 
-if __name__ == "__main__": 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info")
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, log_level="info")
