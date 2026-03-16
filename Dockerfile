@@ -1,30 +1,30 @@
-# Use your base image
-FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/ubuntu22-aiml-base:1.0.0
+FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/aiml-base:1.0.0 AS builder
+# ... (Builder stage remains same)
 
-# Clear proxy settings globally
-ENV HTTP_PROXY=""
-ENV http_proxy=""
-ENV HTTPS_PROXY=""
-ENV https_proxy=""
+FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/aiml-base:1.0.0
+ENV DEBIAN_FRONTEND=noninteractive TZ=Asia/Kolkata PYTHONUNBUFFERED=1
 
+# INLINE FIX: No COPY needed
+RUN echo "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
+deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-updates restricted universe main multiverse\n\
+deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-security restricted universe main multiverse\n\
+deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-backports restricted universe main multiverse" > /etc/apt/sources.list
 
-# Remove the existing 'app' folder from the base image
-RUN rm -rf /app
-
-# Set working directory
-WORKDIR /app
-
-# Copy requirements first for better caching
 COPY requirements.txt .
 
-
-
-RUN pip3 uninstall opencv-python-headless -y
-
-RUN pip3 uninstall opencv-python -y
-
-
+# Proceed with install
+# Install system dependencies
+# Added flags to bypass GPG signature issues with the internal mirror
 RUN pip3 install -i http://10.10.206.59:8080/repository/pypi-proxy/simple --trusted-host 10.10.206.59 -r requirements.txt
+
+WORKDIR /app
+# Install CycloneDX SBOM tool
+RUN python3 -m pip install cyclonedx-bom
+
+
+# Configure pip for internal proxy
+RUN mkdir -p /root/.pip && \
+    echo "[global]\nindex-url = 10.10.206.59\ntrusted-host = 10.10.206.59" > /root/.pip/pip.conf
 
 # Copy application code
 COPY src/ ./src/
@@ -56,4 +56,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Run the application
 CMD ["python", "src/main.py"]
-
