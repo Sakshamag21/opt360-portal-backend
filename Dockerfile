@@ -7,7 +7,6 @@ ENV http_proxy=""
 ENV HTTPS_PROXY=""
 ENV https_proxy=""
 
-COPY ./sources.list /etc/apt/sources.list
 
 # Remove the existing 'app' folder from the base image
 RUN rm -rf /app
