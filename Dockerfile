@@ -1,4 +1,4 @@
-FROM harbor-registry-non-prod.uidai.gov.in/base/python:3.11.5-slim
+FROM harbor-registry-non-prod.uidai.gov.in/base/python:3.15.0a7-alpine
 
 # Point APT to internal mirror
 #RUN printf "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
@@ -8,10 +8,6 @@ FROM harbor-registry-non-prod.uidai.gov.in/base/python:3.11.5-slim
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
