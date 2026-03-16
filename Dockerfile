@@ -41,6 +41,12 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
+# Install CycloneDX SBOM tool
+RUN python3 -m pip install cyclonedx-bom
+
+# Generate SBOM using CycloneDX Python CLI
+RUN python3 -m cyclonedx_py requirements -i requirements.txt -o /SCA-bom.json  
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"
