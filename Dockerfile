@@ -23,7 +23,7 @@ RUN python3 -m pip install --no-cache-dir --timeout 60 --retries 10 --upgrade pi
 
 # Install CycloneDX Python CLI (modern tool)
 # Provides the 'cyclonedx-py' command
-RUN python3 -m pip install --no-cache-dir --timeout 60 --retries 10 cyclonedx-python
+RUN python3 -m pip install --no-cache-dir --timeout 60 --retries 10 cyclonedx-bom
 
 # Copy application code
 COPY src/ ./src/
