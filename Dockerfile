@@ -1,27 +1,31 @@
+# Use your base image
 FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/ubuntu22-aiml-base:1.0.0
 
-RUN echo "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-updates restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-security restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-backports restricted universe main multiverse" > /etc/apt/sources.list
+# Clear proxy settings globally
+ENV HTTP_PROXY=""
+ENV http_proxy=""
+ENV HTTPS_PROXY=""
+ENV https_proxy=""
 
+COPY ./sources.list /etc/apt/sources.list
+
+# Remove the existing 'app' folder from the base image
+RUN rm -rf /app
+
+# Set working directory
 WORKDIR /app
-
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir \
-    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
-    --trusted-host 10.10.206.59 \
-    --upgrade pip && \
-    pip install --no-cache-dir \
-    --root-user-action=ignore \
-    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
-    --trusted-host 10.10.206.59 \
-    -r requirements.txt
 
+
+RUN pip3 uninstall opencv-python-headless -y
+
+RUN pip3 uninstall opencv-python -y
+
+
+RUN pip3 install -i http://10.10.206.59:8080/repository/pypi-proxy/simple --trusted-host 10.10.206.59 -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
@@ -53,3 +57,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Run the application
 CMD ["python", "src/main.py"]
+
