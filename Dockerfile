@@ -36,7 +36,7 @@ RUN useradd -m -u 1000 appuser && \
 # --- SBOM generation at build-time (runs as root or as appuser; both are OK)
 # Using the CLI `cyclonedx-py` to generate from requirements.txt
 # Output goes to /SCA-bom.json at image build time
-RUN cyclonedx-py requirements -i requirements.txt -o /SCA-bom.json -e JSON
+RUN python3 -m cyclonedx_py requirements -i requirements.txt -o /SCA-bom.json  
 
 # Switch to non-root user AFTER all installs and SBOM generation
 USER appuser
