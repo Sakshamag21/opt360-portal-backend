@@ -1,38 +1,59 @@
-FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/aiml-base:1.0.0 AS builder
-# ... (Builder stage remains same)
+# Use your base image
+FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/ubuntu22-aiml-base:1.0.0
 
-FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/aiml-base:1.0.0
-ENV DEBIAN_FRONTEND=noninteractive TZ=Asia/Kolkata PYTHONUNBUFFERED=1
+# ---- Global env ----
+ENV HTTP_PROXY="" \
+    http_proxy="" \
+    HTTPS_PROXY="" \
+    https_proxy="" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-# INLINE FIX: No COPY needed
-RUN echo "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-updates restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-security restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-backports restricted universe main multiverse" > /etc/apt/sources.list
+# Clean any preexisting /app
+RUN rm -rf /app
 
+# Working dir
+WORKDIR /app
+
+# Copy requirements first (cache-friendly)
 COPY requirements.txt .
 
-# Proceed with install
-# Install system dependencies
-# Added flags to bypass GPG signature issues with the internal mirror
-RUN pip3 install -i http://10.10.206.59:8080/repository/pypi-proxy/simple --trusted-host 10.10.206.59 -r requirements.txt
+# Make sure pip tooling is current
+RUN python3 -m pip install --upgrade --no-cache-dir pip setuptools wheel
 
-WORKDIR /app
-# Install CycloneDX SBOM tool
-RUN python3 -m pip install cyclonedx-bom
+# If OpenCV is present in the base image and you want it removed
+RUN python3 -m pip uninstall -y opencv-python-headless || true \
+ && python3 -m pip uninstall -y opencv-python || true
 
+# Install project dependencies from your internal proxy
+# (keep PyPI as fallback in case some wheels are not mirrored)
+RUN python3 -m pip install --no-cache-dir \
+    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
+    --trusted-host 10.10.206.59 \
+    --extra-index-url https://pypi.org/simple \
+    -r requirements.txt
 
-# Configure pip for internal proxy
-RUN mkdir -p /root/.pip && \
-    echo "[global]\nindex-url = 10.10.206.59\ntrusted-host = 10.10.206.59" > /root/.pip/pip.conf
-
-# Copy application code
+# Copy app code
 COPY src/ ./src/
 COPY resources/ ./resources/
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+# ---- Install CycloneDX and generate SBOM as root ----
+# Install CycloneDX SBOM tool
+RUN python3 -m pip install --no-cache-dir \
+    --index-url https://pypi.org/simple \
+    cyclonedx-bom
+
+# (Optional) verify CLI presence
+RUN cyclonedx-py --version || python3 -m cyclonedx_py --version
+
+# Generate SBOM from requirements.txt, write it into /app (writable path)
+RUN python3 -m cyclonedx_py requirements \
+    -i requirements.txt \
+    -o /app/SCA-bom.json
+
+# ---- Create non-root user for runtime ----
+RUN useradd -m -u 1000 appuser \
+ && chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
@@ -40,19 +61,6 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
-
-# Install CycloneDX SBOM tool
-RUN python3 -m pip install cyclonedx-bom
-
-# Generate SBOM using CycloneDX Python CLI
-RUN python3 -m cyclonedx_py requirements -i requirements.txt -o /SCA-bom.json  
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"
 
 # Run the application
 CMD ["python", "src/main.py"]
