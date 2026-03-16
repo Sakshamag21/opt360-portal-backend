@@ -7,6 +7,8 @@ deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-back
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends dnsutils ca-certificates curl && rm -rf /var/lib/apt/lists/*
+
 
 # Copy requirements first for better caching
 COPY requirements.txt .
