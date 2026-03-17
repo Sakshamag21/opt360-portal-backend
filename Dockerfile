@@ -30,10 +30,13 @@ COPY requirements.txt .
 RUN python3 -m pip install --upgrade --no-cache-dir pip setuptools wheel && \
     (python3 -m pip uninstall -y opencv-python-headless opencv-python || true) && \
     python3 -m pip install --no-cache-dir -r requirements.txt && \
-    # Install CycloneDX, generate report, then remove tool to keep image slim
+    # Install CycloneDX
     python3 -m pip install --no-cache-dir cyclonedx-bom && \
-    python3 -m cyclonedx_py requirements --of JSON -o /app/SCA-bom.json requirements.txt && \
+    # Change output path to /SCA-bom.json to match your 'docker cp' command
+    python3 -m cyclonedx_py requirements --of JSON -o /SCA-bom.json requirements.txt && \
+    # Cleanup
     python3 -m pip uninstall -y cyclonedx-bom
+
 
 # Copy application code and resources
 COPY src/ ./src/
