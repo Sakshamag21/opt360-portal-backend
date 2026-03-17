@@ -1,5 +1,5 @@
 # Use your base image
-FROM harbor-registry-non-prod.uidai.gov.in/aiml-projects/ubuntu22-aiml-base:1.0.0
+FROM harbor-registry-non-prod.uidai.gov.in/data-platform/python-base-3:1.0.0
 
 # ---- Global env ----
 ENV HTTP_PROXY="" \
@@ -7,60 +7,48 @@ ENV HTTP_PROXY="" \
     HTTPS_PROXY="" \
     https_proxy="" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Centralizing Pip Config
+    PIP_INDEX_URL=http://10.10.206.59:8080/repository/pypi-proxy/simple \
+    PIP_TRUSTED_HOST=10.10.206.59 \
+    PIP_EXTRA_INDEX_URL=http://10.10.206.59:8080/repository/pypi-third-party/ \
+    PIP_ROOT_USER_ACTION=ignore
 
-# Clean any preexisting /app
-RUN rm -rf /app
+# Set internal Ubuntu mirrors
+RUN echo "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
+deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-updates restricted universe main multiverse\n\
+deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-security restricted universe main multiverse\n\
+deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-backports restricted universe main multiverse" > /etc/apt/sources.list
 
-# Working dir
+# Working directory setup
 WORKDIR /app
 
-# Copy requirements first (cache-friendly)
+# Copy requirements first for better layer caching
 COPY requirements.txt .
 
-# Make sure pip tooling is current
-RUN python3 -m pip install --upgrade --no-cache-dir pip setuptools wheel
+# Upgrade tooling, handle OpenCV cleanup, install requirements, and generate SBOM in one layer
+RUN python3 -m pip install --upgrade --no-cache-dir pip setuptools wheel && \
+    (python3 -m pip uninstall -y opencv-python-headless opencv-python || true) && \
+    python3 -m pip install --no-cache-dir -r requirements.txt && \
+    # Install CycloneDX, generate report, then remove tool to keep image slim
+    python3 -m pip install --no-cache-dir cyclonedx-bom && \
+    python3 -m cyclonedx_py requirements --of JSON -o /app/SCA-bom.json requirements.txt && \
+    python3 -m pip uninstall -y cyclonedx-bom
 
-# If OpenCV is present in the base image and you want it removed
-RUN python3 -m pip uninstall -y opencv-python-headless || true \
- && python3 -m pip uninstall -y opencv-python || true
-
-# Install project dependencies from your internal proxy
-# (keep PyPI as fallback in case some wheels are not mirrored)
-RUN python3 -m pip install --no-cache-dir \
-    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
-    --trusted-host 10.10.206.59 \
-    --extra-index-url https://pypi.org/simple \
-    -r requirements.txt
-
-# Copy app code
+# Copy application code and resources
 COPY src/ ./src/
 COPY resources/ ./resources/
 
-# ---- Install CycloneDX and generate SBOM as root ----
-# Install CycloneDX SBOM tool
-RUN python3 -m pip install --no-cache-dir \
-    --index-url https://pypi.org/simple \
-    cyclonedx-bom
-
-# (Optional) verify CLI presence
-RUN cyclonedx-py --version || python3 -m cyclonedx_py --version
-
-# Generate SBOM from requirements.txt, write it into /app (writable path)
-RUN python3 -m cyclonedx_py requirements \
-    -i requirements.txt \
-    -o /app/SCA-bom.json
-
-# ---- Create non-root user for runtime ----
-RUN useradd -m -u 1000 appuser \
- && chown -R appuser:appuser /app
+# ---- Security: Non-root user setup ----
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
 
-# Expose port
+# Expose application port
 EXPOSE 8000
-
 
 # Run the application
 CMD ["python", "src/main.py"]
+
