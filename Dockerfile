@@ -1,49 +1,57 @@
-FROM harbor-registry-non-prod.uidai.gov.in/base/python:3.11.5-slim
+# Use your base image
+FROM harbor-registry-non-prod.uidai.gov.in/data-platform/python-base-3:1.0.0
 
+# ---- Global env ----
+ENV HTTP_PROXY="" \
+    http_proxy="" \
+    HTTPS_PROXY="" \
+    https_proxy="" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Centralizing Pip Config
+    PIP_INDEX_URL=http://10.10.206.59:8080/repository/pypi-proxy/simple \
+    PIP_TRUSTED_HOST=10.10.206.59 \
+    PIP_EXTRA_INDEX_URL=http://10.10.206.59:8080/repository/pypi-third-party/ \
+    PIP_ROOT_USER_ACTION=ignore
+
+# Set internal Ubuntu mirrors
 RUN echo "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
 deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-updates restricted universe main multiverse\n\
 deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-security restricted universe main multiverse\n\
 deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-backports restricted universe main multiverse" > /etc/apt/sources.list
 
+# Working directory setup
 WORKDIR /app
 
-
-# Copy requirements first for better caching
+# Copy requirements first for better layer caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir \
-    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
-    --trusted-host 10.10.206.59 \
-    --upgrade pip && \
-    pip install --no-cache-dir \
-    --root-user-action=ignore \
-    -i http://10.10.206.59:8080/repository/pypi-proxy/simple \
-    --trusted-host 10.10.206.59 \
-    -r requirements.txt
+# Upgrade tooling, handle OpenCV cleanup, install requirements, and generate SBOM in one layer
+RUN python3 -m pip install --upgrade --no-cache-dir pip setuptools wheel && \
+    (python3 -m pip uninstall -y opencv-python-headless opencv-python || true) && \
+    python3 -m pip install --no-cache-dir -r requirements.txt && \
+    # Install CycloneDX
+    python3 -m pip install --no-cache-dir cyclonedx-bom && \
+    # Change output path to /SCA-bom.json to match your 'docker cp' command
+    python3 -m cyclonedx_py requirements --of JSON -o /SCA-bom.json requirements.txt && \
+    # Cleanup
+    python3 -m pip uninstall -y cyclonedx-bom
 
 
-# Copy application code
+# Copy application code and resources
 COPY src/ ./src/
 COPY resources/ ./resources/
 
-# Create non-root user for security
+# ---- Security: Non-root user setup ----
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
 
-# Expose port
+# Expose application port
 EXPOSE 8000
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"
 
 # Run the application
 CMD ["python", "src/main.py"]
+
