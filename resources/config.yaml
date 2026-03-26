@@ -1,9 +1,9 @@
 database:
-  host: 10.10.75.202
+  host: 10.10.106.159
   port: 3306
   username: su01
   password: su01
-  name: data_platform
+  name: operator360
   tables:
-    feature_registry: opt360_features
-    signal_registry: opt360_signals
+    feature_registry: features
+    signal_registry: signals

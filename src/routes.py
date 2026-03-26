@@ -2,7 +2,7 @@
 API Routes for Operator360 API
 """
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from config.config import config
 import signals.create as signal_create
@@ -38,6 +38,131 @@ def detailed_health() -> Dict[str, Any]:
         "status": "healthy" if db_status == "connected" else "degraded",
         "service": "operator360-api",
         "database": db_status
+    }
+
+
+@health_router.get("/endpoints")
+def get_endpoints_info() -> Dict[str, Any]:
+    """
+    Get information about all available API endpoints
+    
+    Returns a comprehensive list of all endpoints with their methods, paths, and descriptions.
+    """
+    endpoints = [
+        {
+            "path": "/api/",
+            "method": "GET",
+            "tag": "Health",
+            "summary": "Health check endpoint",
+            "description": "Basic health check to verify service is running",
+            "parameters": [],
+            "request_body": None
+        },
+        {
+            "path": "/api/health",
+            "method": "GET",
+            "tag": "Health",
+            "summary": "Detailed health check",
+            "description": "Detailed health check with database connection test",
+            "parameters": [],
+            "request_body": None
+        },
+        {
+            "path": "/api/endpoints",
+            "method": "GET",
+            "tag": "Health",
+            "summary": "API endpoints information",
+            "description": "Get information about all available API endpoints",
+            "parameters": [],
+            "request_body": None
+        },
+        {
+            "path": "/api/signal/create",
+            "method": "POST",
+            "tag": "Signals",
+            "summary": "Create a new signal",
+            "description": "Create a new signal with specified parameters",
+            "parameters": [],
+            "request_body": {
+                "required_fields": [
+                    "id", "name", "description", "feature_id", 
+                    "feature_version", "threshold", "severity_level", "user"
+                ],
+                "example": {
+                    "id": "SIG001",
+                    "name": "Sample Signal",
+                    "description": "Signal description",
+                    "feature_id": "FEAT001",
+                    "feature_version": "1.0",
+                    "threshold": 0.85,
+                    "severity_level": "high",
+                    "user": "admin"
+                }
+            }
+        },
+        {
+            "path": "/api/signal/info/{feature_id}",
+            "method": "GET",
+            "tag": "Signals",
+            "summary": "Get signals by feature ID",
+            "description": "Get all active signals for a specific feature",
+            "parameters": [
+                {
+                    "name": "feature_id",
+                    "in": "path",
+                    "required": True,
+                    "type": "string",
+                    "description": "The unique identifier of the feature"
+                }
+            ],
+            "request_body": None
+        },
+        {
+            "path": "/api/feature/info/",
+            "method": "POST",
+            "tag": "Features",
+            "summary": "Get feature information",
+            "description": "Get feature information with optional filters",
+            "parameters": [],
+            "request_body": {
+                "required_fields": [],
+                "optional_fields": [
+                    "feature_id", "version", "active", "is_risk", "status"
+                ],
+                "examples": [
+                    {
+                        "description": "Get all features",
+                        "value": {}
+                    },
+                    {
+                        "description": "Get specific feature",
+                        "value": {"feature_id": "FEAT001"}
+                    },
+                    {
+                        "description": "Get specific version",
+                        "value": {"feature_id": "FEAT001", "version": "1.0"}
+                    },
+                    {
+                        "description": "Get active features",
+                        "value": {"active": True}
+                    },
+                    {
+                        "description": "Get risky features",
+                        "value": {"is_risk": True}
+                    }
+                ]
+            }
+        }
+    ]
+    
+    return {
+        "service": "operator360-api",
+        "version": "1.0.0",
+        "base_url": "/api",
+        "total_endpoints": len(endpoints),
+        "endpoints": endpoints,
+        "documentation": "/docs",
+        "redoc": "/redoc"
     }
 
 

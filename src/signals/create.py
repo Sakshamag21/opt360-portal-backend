@@ -28,7 +28,6 @@ def create_signal(request: dict) -> Response :
         
         new_version = version + 1
         logger.info(f"Creating signal {request['id']} with version {new_version}")
-        
         query = Queries.CREATE_SIGNAL
         params = (
             request["id"],

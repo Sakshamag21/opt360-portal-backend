@@ -1,0 +1,9 @@
+database:
+  host: localhost
+  port: 3306
+  username: user
+  password: password
+  name: operator360
+  tables:
+    feature_registry: features
+    signal_registry: signals

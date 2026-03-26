@@ -1,6 +1,11 @@
+from config.config import config
 
 class SignalQueries:
-    CREATE_SIGNAL = """INSERT INTO opt360_signals 
+    # Get table name from config
+    signal_table = config.get('database.tables.signal_registry', 'signals')
+    
+    # Format queries with actual table name
+    CREATE_SIGNAL = f"""INSERT INTO {signal_table} 
     (id,
     name,
     version,
@@ -12,12 +17,16 @@ class SignalQueries:
     created_by) 
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-    RETRIEVE_SIGNAL_VERSION = "SELECT MAX(version) as max_version FROM opt360_signals WHERE id = %s AND feature_id = %s"
-    RETRIEVE_SIGNAL_ACTIVE = "SELECT * FROM opt360_signals WHERE feature_id = %s and active = true"  
+    RETRIEVE_SIGNAL_VERSION = f"SELECT MAX(version) as max_version FROM {signal_table} WHERE id = %s AND feature_id = %s"
+    RETRIEVE_SIGNAL_ACTIVE = f"SELECT * FROM {signal_table} WHERE feature_id = %s AND active = true"
 
 
 class FeatureQueries:
-    CREATE_FEATURE = """INSERT INTO opt360_features 
+    # Get table name from config
+    feature_table = config.get('database.tables.feature_registry', 'features')
+    
+    # Format queries with actual table name
+    CREATE_FEATURE = f"""INSERT INTO {feature_table} 
     (feature_id,
     feature_name,
     data_type,
@@ -33,6 +42,6 @@ class FeatureQueries:
     created_by) 
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-    RETRIEVE_FEATURE_VERSION = "SELECT MAX(version) as max_version FROM opt360_features WHERE feature_id = %s"
+    RETRIEVE_FEATURE_VERSION = f"SELECT MAX(version) as max_version FROM {feature_table} WHERE feature_id = %s"
 
-    GET_FEATURE_METADATA_GLOBAL = "SELECT feature_id as unique_id, feature_name as id, version, data_type, description, status, created_at, created_by, destination_table,update_window, dependent_features,is_risk,source_table FROM opt360_features WHERE "
+    GET_FEATURE_METADATA_GLOBAL = f"SELECT feature_id as unique_id, feature_name as id, version, data_type, description, status, created_at, created_by, destination_table, update_window, dependent_features, is_risk, source_table FROM {feature_table} WHERE "
