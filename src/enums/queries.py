@@ -69,8 +69,7 @@ class OperatorDetailQueries:
         state,
         ro,
         machine_code,
-        risk_score,
-        last_sync_timestamp
+        risk_score
     FROM {metadata_table}
     where id= %s
     """
