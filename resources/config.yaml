@@ -7,3 +7,4 @@ database:
   tables:
     feature_registry: features
     signal_registry: signals
+    opt_registry: opt_master
