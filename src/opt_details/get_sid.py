@@ -32,6 +32,8 @@ def get_sid_details(sid: str) -> Dict[str, Any]:
         response.raise_for_status()  # Catch HTTP errors (4xx, 5xx) early
         response_data = response.json()
         
+        print(response_data)
+        
         if response_data.get('status') == 'OK' and response_data.get('found') == 1:
             item_values = response_data['items'][0]['values'][0]
             opt_id = item_values['opt_id']
