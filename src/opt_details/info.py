@@ -15,7 +15,7 @@ def get_operator_details(operator_id: str) -> Dict[str,Any]:
         query= Queries.GET_OPERATOR_METADATA
         params= (operator_id.upper(),)
         result= db.execute_query(query,params)
-        
+        print(result)
         if result is None:
             logger.error(f"Database query failed for Operator Id: {operator_id}")
             return Response.error(f"Failed to retrieve Operator Details for operator_id:{operator_id} from database")
