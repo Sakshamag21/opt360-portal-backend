@@ -1,14 +1,13 @@
 database:
-  host: 10.10.106.159
+  host: 10.10.75.181
   port: 3306
   username: su01
   password: su01
-  name: operator360
+  name: data_platform
   tables:
-    feature_registry: features
-    signal_registry: signals
+    feature_registry: opt360_features
+    signal_registry: opt360_signals
     opt_registry: opt_master
-
 rocksdb:
   host: 10.10.79.28
   port: 30524
