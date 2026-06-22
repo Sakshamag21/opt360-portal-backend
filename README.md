@@ -43,10 +43,65 @@ You can set the `PORT` environment variable to override the port used by the app
 
 ## API
 
-All routes are mounted under the `/api` prefix. The app exposes endpoints for creating and fetching features and signals. Start the server and visit the interactive docs at:
+In this service we list several apis, which have the following request response contracts
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+-- /api/opt_details/info/{operator_id}
+-- reponse data:{
+	"status": "OK",
+	"message": "Operator retrieved successfully",
+	"data": {
+		"operator": [
+		{
+			"optId": "OPT12345",
+			"name": "John Doe",
+			"email": "johndoe@example.com",
+			"reg": "RegName",
+			"regCode": "RC001",
+			"ea": "EAName",
+			"eaCode": "EA002",
+			"pincode": "560001",
+			"district": "Bengaluru",
+			"state": "Karnataka",
+			"ro": "RO_South",
+			"machineCode": "MCH-9981",
+			"riskScore": 14.5
+		}
+		]
+	}
+}
+
+
+
+-- /api/opt_details/sid/{sid}
+-- reponse data:{
+		'success': True, 
+		'message': 'Operator details retrieved successfully', 
+		'data': {'operator': 
+			{
+				'operator': [
+				{
+					'optId': 'WCDKOJ_NS776624', 
+					'name': 'Sahanaj Parvina Mondal', 
+					'email': '', 
+					'reg': 'WCD Assam', 
+					'regCode': '991.0', 
+					'ea': 'WCD Assam', 
+					'eaCode': '991', 
+					'pincode': '783337.0', 
+					'district': 'Kokrajhar', 
+					'state': 'Assam', 
+					'ro': 'Guwahati', 
+					'machineCode':'LENOVOB053F1E5-F10A-21BD-6B6F-F2D672CCA9A','riskScore': 0.04
+				}
+			],
+			'pktType': 'U', 
+			'sid': 'S132222983161020260418055209'
+			}
+		}
+	}
+
+
+
 
 ## Configuration
 
@@ -86,4 +141,5 @@ src/
 
 - This README provides quick start instructions; extend it with endpoint examples, authentication details, and deployment notes as the project evolves.
 - I can add example `curl` commands, a `docker-compose.yml`, or a `CONTRIBUTING.md` if you want—tell me which.
+
 
