@@ -272,14 +272,15 @@ def get_feature_info(request: dict) -> Dict[str, Any]:
     """
     return feature_info.get_feature(request=request)
 
+
 @opt_router.get('/info/{operator_id}')
-def get_operator_details(request: dict) -> Dict[str,Any]:
+def get_operator_details(operator_id: str) -> Dict[str,Any]:
     
-    return operator_info.get_operator_details(request=request)
+    return operator_info.get_operator_details(operator_id=operator_id)
 
 @opt_router.get('/sid/{sid}')
-def get_sid_details(request: dict) -> Dict[str,Any]:
-    return sid_info.get_sid_details(request=request)
+def get_sid_details(sid: str) -> Dict[str,Any]:
+    return sid_info.get_sid_details(sid=sid)
 
 
 # List of all routers to include in main app
