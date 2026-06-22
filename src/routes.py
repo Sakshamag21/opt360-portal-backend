@@ -10,6 +10,7 @@ import signals.info as signal_info
 import signals.info_id as signal_info_id
 import feature.get_feature as feature_info
 import opt_details.info as operator_info
+import opt_details.get_sid as sid_info
 
 # Create routers
 health_router = APIRouter(prefix="", tags=["Health"])
@@ -188,8 +189,25 @@ def get_endpoints_info() -> Dict[str, Any]:
                 }
             ],
             "request_body": None
-            
         },
+        {
+            "path": "/api/opt_details/sid/{sid}",
+            "method": "GET",
+            "tag": "Operator Details for SID",
+            "summary": "Get Operator information corresponding to the particular SID",
+            "description": "Get metadata of the Operator related to the corresponding SID",
+            "parameters": [
+                {
+                    "name": "sid",
+                    "in": "path",
+                    "required": True,
+                    "type": "string",
+                    "description": "The unique identifier of the packet"
+                }
+            ],
+            "request_body": None
+        },
+        
     ]
     
     return {
@@ -258,6 +276,11 @@ def get_feature_info(request: dict) -> Dict[str, Any]:
 def get_operator_details(request: dict) -> Dict[str,Any]:
     
     return operator_info.get_operator_details(request=request)
+
+@opt_router.post('/sid/{sid}')
+def get_sid_details(request: dict) -> Dict[str,Any]:
+    return sid_info.get_sid_details(request=request)
+
 
 # List of all routers to include in main app
 routers = [

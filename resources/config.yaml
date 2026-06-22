@@ -8,3 +8,8 @@ database:
     feature_registry: features
     signal_registry: signals
     opt_registry: opt_master
+
+rocksdb:
+  host: 10.10.79.28
+  port: 30524
+  endpoint: /sid/batch_get
