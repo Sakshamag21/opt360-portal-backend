@@ -272,12 +272,12 @@ def get_feature_info(request: dict) -> Dict[str, Any]:
     """
     return feature_info.get_feature(request=request)
 
-@opt_router.post('/info/{operator_id}')
+@opt_router.get('/info/{operator_id}')
 def get_operator_details(request: dict) -> Dict[str,Any]:
     
     return operator_info.get_operator_details(request=request)
 
-@opt_router.post('/sid/{sid}')
+@opt_router.get('/sid/{sid}')
 def get_sid_details(request: dict) -> Dict[str,Any]:
     return sid_info.get_sid_details(request=request)
 
