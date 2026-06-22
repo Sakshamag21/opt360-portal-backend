@@ -15,7 +15,7 @@ def get_sid_details(sid: str) -> Dict[str, Any]:
     rocksdb_config = config.rocksdb
     # Ensure endpoint format is safe
     endpoint = rocksdb_config.endpoint if rocksdb_config.endpoint.startswith('/') else '/' + rocksdb_config.endpoint
-    endpoint_url = f"{rocksdb_config.host}:{rocksdb_config.port}{endpoint}"
+    endpoint_url = f"http://{rocksdb_config.host}:{rocksdb_config.port}{endpoint}"
     
     payload = {
         'sids': [sid]
