@@ -12,11 +12,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_sid_details(sid: str) -> Dict[str, Any]:
-    rocksdb_config = config.rocksdb
+    rocksdb_config = config.get('rocksdb')
     # Ensure endpoint format is safe
     endpoint = rocksdb_config.endpoint if rocksdb_config.endpoint.startswith('/') else '/' + rocksdb_config.endpoint
     endpoint_url = f"http://{rocksdb_config.host}:{rocksdb_config.port}{endpoint}"
-    
+    print(endpoint_url)
     payload = {
         'sids': [sid]
     }
