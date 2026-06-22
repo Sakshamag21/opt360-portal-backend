@@ -72,13 +72,15 @@ def get_sid_details(sid: str) -> Dict[str, Any]:
                 if isinstance(operator_data, list) and len(operator_data) > 0:
                     record = operator_data[0]
                     record['pktType'] = pkt_type
-                    record['sid'] = sid
+                    record['id'] = sid
+                    record['idType']='sid'
                     return Response.success("Operator details retrieved successfully", {"operator": operator_data})
                 
                 # Handle if operator data is a direct dictionary
                 elif isinstance(operator_data, dict):
                     operator_data['pktType'] = pkt_type
-                    operator_data['sid'] = sid
+                    operator_data['id'] = sid
+                    operator_data['idType']='sid'
                     return Response.success("Operator details retrieved successfully", {"operator": operator_data})
                 
                 return Response.error(f"No operator record data structure valid for opt_id: {opt_id}")
