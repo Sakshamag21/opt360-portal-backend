@@ -57,19 +57,19 @@ class OperatorDetailQueries:
     
     GET_OPERATOR_METADATA=f"""
     SELECT 
-        id as opt_id,
+        id as optId,
         name,
         email,
         reg,
-        reg_code,
+        regCode,
         ea,
-        ea_code,
+        eaCode,
         pincode,
         district,
         state,
         ro,
-        machine_code,
-        risk_score
+        machineCode,
+        riskScore
     FROM {metadata_table}
     where id= %s
     """

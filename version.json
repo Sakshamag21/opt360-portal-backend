@@ -1,5 +1,5 @@
 {
-   "version":"1.0.1-RELEASE",
+   "version":"1.0.3-SNAPSHOT",
     "app_name": "operator360-api",
     "artifact_id": "operator360-api"
 }
