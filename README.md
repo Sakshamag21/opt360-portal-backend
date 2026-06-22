@@ -44,7 +44,7 @@ You can set the `PORT` environment variable to override the port used by the app
 ## API
 
 In this service we list several apis, which have the following request response contracts
-
+```bash
 -- /api/opt_details/info/{operator_id}
 -- reponse data:{
 	"status": "OK",
@@ -69,9 +69,9 @@ In this service we list several apis, which have the following request response 
 		]
 	}
 }
+```
 
-
-
+```bash
 -- /api/opt_details/sid/{sid}
 -- reponse data:{
 		'success': True, 
@@ -91,15 +91,17 @@ In this service we list several apis, which have the following request response 
 					'district': 'Kokrajhar', 
 					'state': 'Assam', 
 					'ro': 'Guwahati', 
-					'machineCode':'LENOVOB053F1E5-F10A-21BD-6B6F-F2D672CCA9A','riskScore': 0.04
+					'machineCode':'LENOVOB053F1E5-F10A-21BD-6B6F-F2D672CCA9A',
+                    'riskScore': 0.04
 				}
 			],
 			'pktType': 'U', 
-			'sid': 'S132222983161020260418055209'
+			'id': 'S132222983161020260418055209'
+            'idType':'sid'
 			}
 		}
 	}
-
+```
 
 
 
