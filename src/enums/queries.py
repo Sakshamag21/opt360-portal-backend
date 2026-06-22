@@ -61,15 +61,15 @@ class OperatorDetailQueries:
         name,
         email,
         reg,
-        regCode,
+        reg_code as regCode,
         ea,
-        eaCode,
+        ea_code as eaCode,
         pincode,
         district,
         state,
         ro,
-        machineCode,
-        riskScore
+        machine_code as machineCode,
+        risk_score as riskScore
     FROM {metadata_table}
     where id= %s
     """
