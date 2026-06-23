@@ -68,7 +68,7 @@ class OperatorDetailQueries:
         district,
         state,
         ro,
-        machine_code as machineCode,
+        '' as machineCode,
         risk_score as riskScore
     FROM {metadata_table}
     where id= %s
