@@ -144,4 +144,6 @@ src/
 - This README provides quick start instructions; extend it with endpoint examples, authentication details, and deployment notes as the project evolves.
 - I can add example `curl` commands, a `docker-compose.yml`, or a `CONTRIBUTING.md` if you want—tell me which.
 
+## Current Deployed IP:-
+10.10.118.48:8000
 
