@@ -1,7 +1,7 @@
 """
 API Routes for Operator360 API
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List
 
 from config.config import config
@@ -174,21 +174,16 @@ def get_endpoints_info() -> Dict[str, Any]:
             }
         },
         {
-            "path": "/api/opt_details/info/{operator_id}",
-            "method": "GET",
+            "path": "/api/opt_details/info",
+            "method": "POST",
             "tag": "Operator Details",
             "summary": "Get Operator Information",
             "description": "Get metadata related to the corresponding Operator Id",
-            "parameters": [
-                {
-                    "name": "operator_id",
-                    "in": "path",
-                    "required": True,
-                    "type": "string",
-                    "description": "The unique identifier of the operator(in uppercase)"
-                }
-            ],
-            "request_body": None
+            "parameters": [],
+            "request_body": {
+                "required_fields": ["operator_id"],
+                "example": {"operator_id": "OPT12345"}
+            }
         },
         {
             "path": "/api/opt_details/sid/{sid}",
@@ -274,9 +269,9 @@ def get_feature_info(request: dict) -> Dict[str, Any]:
 
 
 @opt_router.post('/info')
-def get_operator_details(operator_id: str) -> Dict[str,Any]:
-    
-    return operator_info.get_operator_details(operator_id=request.operator_id)
+def get_operator_details(operator_id: str = Body(..., embed=True)) -> Dict[str,Any]:
+    # Notice we use 'operator_id' directly, not 'request.operator_id'
+    return operator_info.get_operator_details(operator_id=operator_id)
   
   
 
