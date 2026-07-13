@@ -1,0 +1,1443 @@
+openapi: 3.0.3
+info:
+  title: Operator360 Portal Backend API
+  version: 1.0.0
+  description: |
+    Contract reference for the Operator360 portal backend, generated from the
+    current handler implementations on branch f/oid-pid. All routes are under
+    `/api` and require a bearer/session token validated by AuthMiddleware.
+
+    Endpoints whose S3 file paths are keyed by an operator now resolve the S3
+    prefix via `opt_master.data_path` looked up by `opt_id` — they no longer
+    accept or require `opt_state` / `opt_district`.
+
+servers:
+  - url: /api
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+      required: [error]
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_records:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+
+    User:
+      type: object
+      properties:
+        ad_id:
+          type: string
+        name:
+          type: string
+        regional_office:
+          type: string
+        role:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: User not found in context
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Requested file not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    ServerError:
+      description: Internal server error (S3, DB, or parse failure)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  parameters:
+    OptId:
+      name: opt_id
+      in: query
+      required: true
+      schema:
+        type: string
+      example: MH_WMIT_SN_NS046496
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        maximum: 1000
+
+paths:
+  /user/info:
+    get:
+      summary: Get current authenticated user's info
+      operationId: GetUserInfo
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: User not found in context
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /update_ro:
+    post:
+      summary: Update the caller's regional-office group
+      operationId: UpdateRO
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [group]
+              properties:
+                group:
+                  type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  user_id: { type: string }
+                  group: { type: string }
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Token claims / user id missing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500":
+          description: Failed to parse token claims
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /kpi:
+    get:
+      summary: Get KPI summary for the caller's regional office
+      operationId: GetKPIData
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  high_risk_count: { type: integer }
+                  med_risk_count: { type: integer }
+                  low_risk_count: { type: integer }
+                  most_common_anomaly_code: { type: string }
+                  most_common_anomaly_group: { type: string }
+                  most_common_anomaly_name: { type: string }
+                  opt_ro: { type: string }
+                  highest_risk_opt:
+                    type: object
+                    properties:
+                      opt_id: { type: string }
+                      opt_name: { type: string }
+                      opt_risk_score: { type: number }
+                  top_10_opt:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        active_status: { type: integer }
+                        opt_district: { type: string }
+                        opt_ea: { type: string }
+                        opt_id: { type: string }
+                        opt_name: { type: string }
+                        opt_reg: { type: string }
+                        opt_risk_score: { type: number }
+                        opt_ro: { type: string }
+                        opt_state: { type: string }
+                        pkts_per_day: { type: number }
+                        rn: { type: integer }
+                        opt_email: { type: string }
+                        opt_mobile: { type: string }
+                        machine_details:
+                          type: object
+                          properties:
+                            last_sync_time: { type: string }
+                            machine_code: { type: string }
+                            station_id: { type: string }
+        "401":
+          description: User not found in context
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "404":
+          description: KPI file not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500":
+          description: S3 / parse failure
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+
+  /ro_risk_distribution:
+    get:
+      summary: Get raw kpi.json risk distribution for caller's RO
+      operationId: GetROQRiskDistribution
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file: { type: string }
+                  requested_by: { type: string }
+                  regional_office: { type: string }
+                  data: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /ro_risk_dist:
+    get:
+      summary: Get risk distribution counts across all regional offices
+      operationId: GetRORiskDist
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    description: Keyed by RO name (Bangalore, Chandigarh, Delhi, Guwahati, Hyderabad, Lucknow, Mumbai, Ranchi)
+                    additionalProperties:
+                      type: object
+                      properties:
+                        high_risk_count: { type: integer }
+                        med_risk_count: { type: integer }
+                        low_risk_count: { type: integer }
+                        no_risk_count: { type: integer }
+                  file: { type: string }
+                  regional_office: { type: string }
+                  requested_by: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /highest_risk_opt:
+    get:
+      summary: Get the single highest-risk operator for caller's RO
+      operationId: GetHighestRiskOperator
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      name: { type: string }
+                      risk_score: { type: number }
+                      high_opt_count: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /featureAnalysis:
+    get:
+      summary: Get feature analysis JSON for an RO
+      operationId: GetFeatureAnalysis
+      parameters:
+        - name: RO
+          in: query
+          required: false
+          schema: { type: string }
+          example: Mumbai
+          description: Defaults to the caller's regional office if omitted.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  requested_by: { type: string }
+                  data: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /get_state_district:
+    get:
+      summary: List all distinct states and districts
+      operationId: GetStateDistrict
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  states: { type: array, items: { type: string } }
+                  districts: { type: array, items: { type: string } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /get_ea_registrar:
+    get:
+      summary: Get EAs grouped by registrar for caller's RO
+      operationId: GetEARegistrar
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items: { type: string }
+                  total: { type: integer }
+                  regional_office: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /geteaandreg:
+    get:
+      summary: Get a flat list of all EAs or registrars for caller's RO
+      operationId: GetEaAndReg
+      parameters:
+        - name: value
+          in: query
+          required: true
+          schema: { type: string, enum: [ea, reg] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { type: string } }
+                  count: { type: integer }
+                  type: { type: string }
+                  regional_office: { type: string }
+        "400":
+          description: Missing or invalid 'value' parameter
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /selected_eas:
+    post:
+      summary: Get risk distribution for a chosen set of EAs
+      operationId: GetSelectedEAs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selected_eas]
+              properties:
+                selected_eas:
+                  type: array
+                  items: { type: string }
+                  minItems: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ea_distribution:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        high_risk: { type: integer }
+                        med_risk: { type: integer }
+                        low_risk: { type: integer }
+                        no_risk: { type: integer }
+        "400":
+          description: Invalid body or empty selected_eas
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /top10ea:
+    get:
+      summary: Get the top 10 EAs by total risk count for caller's RO
+      operationId: GetTop10EAs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ea_distribution:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        high_risk: { type: integer }
+                        med_risk: { type: integer }
+                        low_risk: { type: integer }
+                        no_risk: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /all_eas:
+    get:
+      summary: Get all EA names for caller's RO (sorted)
+      operationId: GetAllEAs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eas: { type: array, items: { type: string } }
+                  count: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /top10eav1:
+    get:
+      summary: Get top 10 EAs by risk counts (DB-backed v1)
+      operationId: GetTop10EAsV1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      ea:
+                        type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            high_risk_count: { type: integer }
+                            med_risk_count: { type: integer }
+                            low_risk_count: { type: integer }
+                  regional_office: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /top10regv1:
+    get:
+      summary: Get top 10 registrars by risk counts (DB-backed v1)
+      operationId: GetTop10regV1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      registrars:
+                        type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            high_risk_count: { type: integer }
+                            med_risk_count: { type: integer }
+                            low_risk_count: { type: integer }
+                  regional_office: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /selected_registrars:
+    post:
+      summary: Get risk distribution for a chosen set of registrars
+      operationId: GetSelectedRegistrars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selected_registrars]
+              properties:
+                selected_registrars:
+                  type: array
+                  items: { type: string }
+                  minItems: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reg_distribution:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        high_risk: { type: integer }
+                        med_risk: { type: integer }
+                        low_risk: { type: integer }
+                        no_risk: { type: integer }
+        "400":
+          description: Invalid body or empty selected_registrars
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /top10registrar:
+    get:
+      summary: Get the top 10 registrars by total risk count for caller's RO
+      operationId: GetTop10Registrars
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reg_distribution:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        high_risk: { type: integer }
+                        med_risk: { type: integer }
+                        low_risk: { type: integer }
+                        no_risk: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /all_registrars:
+    get:
+      summary: Get all registrar names for caller's RO (sorted)
+      operationId: GetAllRegistrars
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registrars: { type: array, items: { type: string } }
+                  count: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /operator_list:
+    get:
+      summary: Get paginated, filterable operator list (parquet-backed)
+      operationId: GetOperatorList
+      parameters:
+        - name: RO
+          in: query
+          required: false
+          schema: { type: string }
+          example: Mumbai
+          description: |
+            Overrides the caller's own regional office. Use this when
+            navigating here from a search result (e.g. clicking an operator
+            ID from packet search or feature analysis) where the operator
+            may belong to a different RO than the caller's. Defaults to the
+            caller's regional office if omitted.
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: opt_ea
+          in: query
+          schema: { type: string }
+        - name: opt_reg
+          in: query
+          schema: { type: string }
+        - name: opt_district
+          in: query
+          schema: { type: string }
+        - name: opt_state
+          in: query
+          schema: { type: string }
+        - name: opt_id
+          in: query
+          schema: { type: string }
+          description: Substring match.
+        - name: active_status
+          in: query
+          schema: { type: string, enum: [active, inactive] }
+        - name: risk
+          in: query
+          schema: { type: string, enum: [high, med, low] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  file: { type: string }
+                  total_count: { type: integer }
+                  filtered_count: { type: integer }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  filters:
+                    type: object
+                    properties:
+                      opt_ea: { type: string }
+                      opt_reg: { type: string }
+                      opt_district: { type: string }
+                      opt_state: { type: string }
+                      opt_id: { type: string }
+                      active_status: { type: string }
+                      risk: { type: string }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /active_operator_list:
+    get:
+      summary: Get paginated active operators (DB-backed)
+      operationId: GetActiveOperatorList
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  total_count: { type: integer }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        opt_id: { type: string }
+                        user_status: { type: integer }
+                        user_name: { type: string }
+                        risk_score: { type: number, nullable: true }
+                        ea_org_name: { type: string }
+                        reg_org_name: { type: string }
+                        reg_ro_name: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /inactive_operator_list:
+    get:
+      summary: Get paginated inactive operators (DB-backed)
+      operationId: GetInactiveOperatorList
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  total_count: { type: integer }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        opt_id: { type: string }
+                        user_status: { type: integer }
+                        user_name: { type: string }
+                        risk_score: { type: number, nullable: true }
+                        ea_org_name: { type: string }
+                        reg_org_name: { type: string }
+                        reg_ro_name: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /high_risk_operator:
+    get:
+      summary: Get paginated high-risk operators (parquet-backed)
+      operationId: GetHighRiskOperators
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  file: { type: string }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Opt_id: { type: string }
+                        Opt_risk_score: { type: number }
+                        Active_status: { type: integer }
+                        Opt_name: { type: string }
+                        Opt_district: { type: string }
+                        Opt_state: { type: string }
+                        Opt_ro: { type: string }
+                        Last_sync_time: { type: integer, format: int64 }
+                        Opt_ea: { type: string }
+                        Opt_reg: { type: string }
+                        Packets_per_day: { type: number }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /med_risk_operator:
+    get:
+      summary: Get paginated medium-risk operators (parquet-backed)
+      operationId: GetMediumRiskOperators
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  file: { type: string }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /low_risk_operator:
+    get:
+      summary: Get paginated low-risk operators (parquet-backed)
+      operationId: GetLowRiskOperators
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  file: { type: string }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Low risk operators file not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+                  regional_office: { type: string }
+                  file: { type: string }
+                  details: { type: string }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /operator_list_with_risk:
+    get:
+      summary: Get paginated operators by risk bucket (DB-backed, opt_master)
+      operationId: GetOperatorListWithRisk
+      parameters:
+        - name: risk_bucket
+          in: query
+          required: true
+          schema: { type: string, enum: [Low, Medium, High, No] }
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        uid: { type: string }
+                        name: { type: string }
+                        phone: { type: string }
+                        email: { type: string }
+                        risk_score: { type: number, nullable: true }
+                        risk_bucket: { type: string, nullable: true }
+                        data_path: { type: string, nullable: true }
+                        updated_at: { type: string, nullable: true }
+                        user_status: { type: string, nullable: true }
+                        user_name: { type: string, nullable: true }
+                        reg: { type: string, nullable: true }
+                        ea: { type: string, nullable: true }
+                        district: { type: string, nullable: true }
+                        state: { type: string, nullable: true }
+                        last_sync_timestamp: { type: string, nullable: true }
+                  total: { type: integer }
+                  page: { type: integer }
+                  page_size: { type: integer }
+                  total_pages: { type: integer }
+                  risk_bucket: { type: string }
+        "400":
+          description: Missing or invalid risk_bucket
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /filter_operator_list:
+    get:
+      summary: Get filtered, paginated operator list (DB-backed, opt_master)
+      operationId: GetFilteredOperatorList
+      parameters:
+        - name: state
+          in: query
+          schema: { type: string }
+        - name: district
+          in: query
+          schema: { type: string }
+        - name: id
+          in: query
+          schema: { type: string }
+          description: When provided, global search is allowed for admin role; otherwise still scoped to caller's RO.
+        - name: ea
+          in: query
+          schema: { type: string }
+        - name: reg
+          in: query
+          schema: { type: string }
+        - name: risk_bucket
+          in: query
+          schema: { type: string }
+        - name: user_status
+          in: query
+          schema: { type: string, enum: [active, inactive] }
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        risk_score: { type: number, nullable: true }
+                        risk_bucket: { type: string, nullable: true }
+                        reg: { type: string, nullable: true }
+                        ea: { type: string, nullable: true }
+                        ro: { type: string, nullable: true }
+                        district: { type: string, nullable: true }
+                        state: { type: string, nullable: true }
+                        last_sync_timestamp: { type: string, nullable: true }
+                        data_path: { type: string, nullable: true }
+                        user_status: { type: string, nullable: true }
+                  total: { type: integer }
+                  page: { type: integer }
+                  page_size: { type: integer }
+                  total_pages: { type: integer }
+                  applied_filters:
+                    type: object
+                    properties:
+                      ro: { type: string }
+                      state: { type: string }
+                      district: { type: string }
+                      id: { type: string }
+                      ea: { type: string }
+                      reg: { type: string }
+                      risk_bucket: { type: string }
+                      user_status: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /active_opt:
+    get:
+      summary: Get active operator status/code pairs for caller's RO
+      operationId: GetActiveOpt
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user_status: { type: string }
+                        user_code: { type: string }
+                  count: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /operator_details:
+    get:
+      summary: Get an operator's opt_details.json
+      description: |
+        File path is resolved via opt_master.data_path looked up by opt_id.
+        opt_state/opt_district are no longer accepted.
+      operationId: GetOperatorDetails
+      parameters:
+        - $ref: "#/components/parameters/OptId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  operator_id: { type: string }
+                  file: { type: string }
+                  data: { type: object, additionalProperties: true }
+                  requested_by: { type: string }
+        "400":
+          description: opt_id missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Operator data path or file not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /operator_features:
+    get:
+      summary: Get an operator's transformed feature/KPI data
+      description: |
+        File path is resolved via opt_master.data_path looked up by opt_id.
+        opt_state/opt_district are no longer accepted. Note the success
+        response is NOT wrapped — the transformed object is the top-level body.
+      operationId: GetOperatorFeatures
+      parameters:
+        - $ref: "#/components/parameters/OptId"
+      responses:
+        "200":
+          description: OK (unwrapped body)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  opt_id: { description: "Type depends on source data, typically string" }
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                    description: Present only if source JSON had a metadata key.
+                  kpis:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: array
+                        items: { type: object, additionalProperties: true }
+        "400":
+          description: opt_id missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Operator data path or file not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /operator_risk_details:
+    get:
+      summary: Get an operator's risk_details.json
+      description: |
+        File path is resolved via opt_master.data_path looked up by opt_id.
+        opt_state/opt_district are no longer accepted.
+      operationId: GetOperatorRiskDetails
+      parameters:
+        - $ref: "#/components/parameters/OptId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  operator_id: { type: string }
+                  file: { type: string }
+                  data: { type: object, additionalProperties: true }
+                  requested_by: { type: string }
+        "400":
+          description: opt_id missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Operator data path or file not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /operator_status:
+    post:
+      summary: Get an operator's UID-DB status by user_code
+      operationId: GetOperatorStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_code]
+              properties:
+                user_code: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_status: { type: string }
+                  user_name: { type: string }
+                  user_uid: { type: integer, format: int64 }
+        "400":
+          description: Invalid body or missing user_code
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "404":
+          description: Operator not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+                  user_code: { type: string }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /search_operator_packets:
+    get:
+      summary: Search/paginate an operator's SID packets (sid.parquet)
+      description: |
+        File path is resolved via opt_master.data_path looked up by opt_id.
+        opt_state/opt_district are no longer accepted.
+      operationId: SearchOperatorPacketsBySID
+      parameters:
+        - $ref: "#/components/parameters/OptId"
+        - $ref: "#/components/parameters/Page"
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10, maximum: 1000 }
+        - name: sid
+          in: query
+          schema: { type: string }
+          description: Substring match against the eid field.
+        - name: anomaly_filter
+          in: query
+          schema: { type: string, enum: [anomalous, non-anomalous] }
+        - name: enrollment_type
+          in: query
+          schema: { type: string, enum: [new_enrollment, update] }
+        - name: date
+          in: query
+          schema: { type: string }
+          example: "2025-12-25"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  operator_id: { type: string }
+                  file_path: { type: string }
+                  search_sid: { type: string }
+                  anomaly_filter: { type: string }
+                  enrollment_type_filter: { type: string }
+                  date_filter: { type: string }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+                  requested_by: { type: string }
+        "400":
+          description: opt_id missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Operator data path or sid.parquet not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /anamolous_sids:
+    get:
+      summary: List/paginate an operator's anomalous SIDs
+      description: |
+        File path is resolved via opt_master.data_path looked up by opt_id.
+        opt_state/opt_district are no longer accepted.
+      operationId: GetAnamolousSIDs
+      parameters:
+        - $ref: "#/components/parameters/OptId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: anomaly_category
+          in: query
+          schema: { type: string }
+          example: Biometrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  operator_id: { type: string }
+                  file: { type: string }
+                  anomaly_category_filter: { type: string }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        sid: { type: string }
+                        operator_id: { type: string }
+                        anomaly_category: { type: string }
+                      additionalProperties: true
+                  requested_by: { type: string }
+        "400":
+          description: opt_id missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Operator data path or anomaly_sid.json not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /sid/batch_get:
+    post:
+      summary: Batch-fetch SID values from the upstream SID store
+      operationId: GetSIDBatchValues
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: array
+                  items: { type: string }
+                - type: object
+                  required: [sids]
+                  properties:
+                    sids:
+                      type: array
+                      items: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  requested: { type: integer }
+                  successful: { type: integer }
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        sid: { type: string }
+                        success: { type: boolean }
+                        status_code: { type: integer }
+                        response: {}
+                        error: { type: string }
+        "400":
+          description: Invalid body or empty sids
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500":
+          description: Failed to load configuration
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+
+  /feedback:
+    post:
+      summary: Submit feedback for an operator
+      description: |
+        File path is resolved via opt_master.data_path looked up by opt_id.
+        Body is a freeform object — only opt_id is required; every field
+        sent is persisted as-is to S3 (opt_state/opt_district are no longer
+        required but may still be sent and will be stored).
+      operationId: SubmitFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [opt_id]
+              properties:
+                opt_id: { type: string }
+              additionalProperties: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  regional_office: { type: string }
+                  operator_id: { type: string }
+                  file_path: { type: string }
+                  date: { type: string }
+                  submitted_by: { type: string }
+        "400":
+          description: Invalid JSON or missing opt_id
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Operator data path not found
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /anamoly_indicators:
+    get:
+      summary: Get anomaly insight indicators for caller's RO
+      operationId: GetAnamolyIndicators
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file: { type: string }
+                  requested_by: { type: string }
+                  regional_office: { type: string }
+                  data: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /region_evaluation_count:
+    get:
+      summary: Get audit.json evaluation counts for an RO/state/district
+      operationId: GetRegionEvaluationCount
+      parameters:
+        - name: regional_office
+          in: query
+          required: true
+          schema: { type: string }
+          example: Mumbai
+        - name: opt_state
+          in: query
+          required: false
+          schema: { type: string }
+        - name: opt_district
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regional_office: { type: string }
+                  opt_state: { type: string }
+                  opt_district: { type: string }
+                  file: { type: string }
+                  data: { type: object, additionalProperties: true }
+                  requested_by: { type: string }
+        "400":
+          description: regional_office missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /report_anomaly:
+    post:
+      summary: Report an anomaly for a packet
+      operationId: ReportAnomaly
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eid, opt_id]
+              properties:
+                eid: { type: string }
+                opt_id: { type: string }
+                anomaly_category: { type: string }
+                anomaly_type:
+                  type: array
+                  description: Only the first element is used.
+                  items:
+                    type: object
+                    properties:
+                      anomaly_category: { type: string }
+                      anomaly_code: { type: string }
+                      anomaly_name: { type: string }
+                      reason:
+                        type: object
+                        properties:
+                          error_category: { type: string }
+                date_created: { type: string }
+                enrolnment_type: { type: string }
+                opt_state: { type: string }
+                opt_district: { type: string }
+                pkt_source: { type: string }
+                pkt_updt_type:
+                  type: array
+                  items: { type: string }
+                  description: Joined with ", " before insert.
+                remarks:
+                  type: array
+                  items: { type: string }
+                  description: Joined with ", " before insert.
+                station_machine_code: { type: string }
+                station_no: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  eid: { type: string }
+        "400":
+          description: Invalid JSON or missing eid/opt_id
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500":
+          description: Failed to insert anomaly record
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+

@@ -1,0 +1,16 @@
+# Local runtime config — contains real credentials. Copy config.example.json
+# to config.json and fill in real values, or use OPT360_* env vars instead
+# (see config/config.go). Never commit config.json or a filled-in .env.
+config.json
+.env
+
+# K8s/ArgoCD deploy manifests — contains real staging credentials, managed
+# separately in Gitea's infra repo, not this application repo.
+deploy/
+
+# Build artifacts
+*.exe
+opt360-portal-backend
+
+# Editor/OS cruft
+.DS_Store

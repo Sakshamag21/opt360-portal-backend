@@ -1,0 +1,59 @@
+{
+    "server": {
+        "host": "0.0.0.0",
+        "port": 8080
+    },
+    "s3": {
+        "bucket_name": "CHANGE_ME",
+        "access_key": "CHANGE_ME",
+        "secret_key": "CHANGE_ME",
+        "endpoint": "CHANGE_ME",
+        "region": "us-east-1"
+    },
+    "databases": {
+        "portal": {
+            "host": "CHANGE_ME",
+            "port": 3306,
+            "user": "CHANGE_ME",
+            "password": "CHANGE_ME",
+            "database": "strot_services",
+            "max_open_conns": 10,
+            "max_idle_conns": 2,
+            "conn_max_lifetime_seconds": 300
+        },
+        "uid": {
+            "host": "CHANGE_ME",
+            "port": 3306,
+            "user": "CHANGE_ME",
+            "password": "CHANGE_ME",
+            "database": "uidmasterv1_1",
+            "max_open_conns": 15,
+            "max_idle_conns": 5,
+            "conn_max_lifetime_seconds": 300
+        }
+    },
+    "_comment_opt_master": "The opt_master connection and table reference are hardcoded in main.go / query call sites (operator360.opt_master on a pinned host) -- not config-driven. See main.go's db.InitDB call.",
+    "tables": {
+        "portal_users": { "database": "strot_services", "table": "opt360_portal_users" },
+        "mark_anomaly": { "database": "strot_services", "table": "mark_anomaly" }
+    },
+    "sid_store": {
+        "base_url": "http://localhost:9001",
+        "timeout_seconds": 15
+    },
+    "clickhouse": {
+        "host": "",
+        "port": 9000,
+        "database": "",
+        "username": "",
+        "password": "",
+        "secure": false
+    },
+    "trino": {
+        "host": "",
+        "port": 8080,
+        "catalog": "",
+        "schema": "",
+        "username": ""
+    }
+}
