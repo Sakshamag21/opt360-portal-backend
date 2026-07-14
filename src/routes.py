@@ -1,9 +1,9 @@
 """
 API Routes for Operator360 API
 """
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Request
 from typing import Dict, Any, List
-
+from utils.response import Response
 from config.config import config
 import signals.create as signal_create
 import signals.info as signal_info
@@ -11,12 +11,17 @@ import signals.info_id as signal_info_id
 import feature.get_feature as feature_info
 import opt_details.info as operator_info
 import opt_details.get_sid as sid_info
+import sid_details.all_sids as sid_details
+from datetime import datetime
+
+
 
 # Create routers
 health_router = APIRouter(prefix="", tags=["Health"])
 signal_router = APIRouter(prefix="/signal", tags=["Signals"])
 feature_router = APIRouter(prefix="/feature", tags=["Features"])
 opt_router = APIRouter(prefix='/opt_details',tags=["Operator Details"])
+sid_router= APIRouter(prefix='/sid_details',tags=["SID Details"])
 
 # Health Check Routes
 @health_router.get("/")
@@ -280,10 +285,55 @@ def get_sid_details(sid: str) -> Dict[str,Any]:
     return sid_info.get_sid_details(sid=sid)
 
 
+@sid_router.post('/sids/all')
+async def get_sids_details(request: Request):
+    # 1. Read the raw JSON body from the FastAPI Request object
+    try:
+        data = await request.json()
+    except Exception:
+        return Response.error("Request body must be valid JSON")
+
+    if not data:
+        return Response.error("Request body must be valid JSON")
+
+    opt_id = data.get('opt_id')
+    date_str = data.get('date')
+
+    # 2. Validate required parameters
+    missing_params = []
+    if not opt_id:
+        missing_params.append('opt_id')
+    if not date_str:
+        missing_params.append('date')
+
+    if missing_params:
+        return Response.error(
+            f"Missing required parameter(s): {', '.join(missing_params)}"
+        )
+
+    # 3. Validate date format
+    try:
+        parsed_date = datetime.strptime(date_str, "%Y-%m-%d")
+        date_str = parsed_date.strftime("%Y-%m-%d")
+    except ValueError:
+        return Response.error(
+            f"Invalid date format: '{date_str}'. Expected format: YYYY-MM-DD"
+        )
+
+    # 4. Call your core function
+    try:
+        result = sid_details.get_all_sids_date(opt_id=opt_id, date_str=date_str)
+        return result
+
+    except Exception as e:
+        return Response.error(f"An unexpected error occurred: {str(e)}")    
+    
+    
 # List of all routers to include in main app
 routers = [
     health_router,
     signal_router,
     feature_router,
-    opt_router
+    opt_router,
+    sid_router
 ]

@@ -12,3 +12,16 @@ rocksdb:
   host: 10.13.159.221
   port: 8089
   endpoint: /sid/batch_get
+
+rocksdb_sid_store:
+  host: 10.13.159.221
+  port: 8089
+  endpoint: /sid/batch_get
+
+rocksdb_operator_store:
+  host: 10.10.118.51
+  port: 8089
+  endpoint: /optid/get_by_date
+
+
+
