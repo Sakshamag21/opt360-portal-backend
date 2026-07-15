@@ -22,6 +22,8 @@ def get_all_sids_date(opt_id: str, date_str: str):
     endpoint_url = f"http://{rocksdb_config_operator_store.get('host')}:{rocksdb_config_operator_store.get('port')}{endpoint}"
     logger.info(f"Step 1: Connecting to RocksDB Operator store endpoint: {endpoint_url}")
     
+    
+    date_str= date_str.replace('-','')
     payload = {
         "opt_id": opt_id,
         "date": date_str
