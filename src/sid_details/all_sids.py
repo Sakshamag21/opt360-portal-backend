@@ -170,16 +170,13 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
         elif isinstance(sid_details_response, dict): 
             details_data = sid_details_response.get('data', {})
         
-        sids_info = details_data.get("sids_info", [])
-        print(sids_info,'sids info')
-        # Build lookup map for this page only
         details_map = {}
-        for sid_info in sids_info:
-            sid_value = sid_info.get('sid')
-            if sid_value:
-                values = sid_info.get('values', [])
-                value_entry = values[0] if values else {}
-                details_map[sid_value] = value_entry
+        sids_info = details_data.get("sids_info", [])
+        if sids_info:
+            for sid_info in sids_info:
+                sid_value = sid_info.get('sid')
+                if sid_value is not None:
+                    details_map[sid_value] = sid_info
         
         print(details_map,'details data')
         print(page_sids, 'page sids')
