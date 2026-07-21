@@ -163,7 +163,7 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
         
         # --- INTEGRATED GET_SID_DETAILS CALL ---
         sid_details_response = get_sid_details(page_sids)
-        
+        print(sid_details_response,'sid details response')
         details_data = {}
         if hasattr(sid_details_response, 'data') and isinstance(sid_details_response.data, dict):
             details_data = sid_details_response.data
@@ -171,7 +171,7 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
             details_data = sid_details_response.get('data', {})
         
         sids_info = details_data.get("sids_info", [])
-
+        print(sids_info,'sids info')
         # Build lookup map for this page only
         details_map = {}
         for sid_info in sids_info:
@@ -180,6 +180,8 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
                 values = sid_info.get('values', [])
                 value_entry = values[0] if values else {}
                 details_map[sid_value] = value_entry
+        
+        print(details_data,'details data')
 
         # Build final response list
         sid_det = []
