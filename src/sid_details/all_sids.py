@@ -163,7 +163,7 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
         
         # --- INTEGRATED GET_SID_DETAILS CALL ---
         sid_details_response = get_sid_details(page_sids)
-        print(sid_details_response,'sid details response')
+        # print(sid_details_response,'sid details response')
         details_data = {}
         if hasattr(sid_details_response, 'data') and isinstance(sid_details_response.data, dict):
             details_data = sid_details_response.data
@@ -178,8 +178,8 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
                 if sid_value is not None:
                     details_map[sid_value] = sid_info
         
-        print(details_map,'details data')
-        print(page_sids, 'page sids')
+        # print(details_map,'details data')
+        # print(page_sids, 'page sids')
         # Build final response list
         sid_det = []
         for sid in page_sids:
