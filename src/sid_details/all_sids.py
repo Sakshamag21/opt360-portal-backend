@@ -113,7 +113,7 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
                     except ValueError as json_err:
                         return Response.error("Invalid JSON response from Operator store")
                     
-                    records = data.get("Results", [])
+                    records = data.get("results", [])
                     all_sids = []
                     for record in records:
                         if isinstance(record, str):
