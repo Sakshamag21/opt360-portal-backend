@@ -94,9 +94,9 @@ def get_sid_details(sids: List):
             # Build the final list: Match the original requested sids list perfectly
             final_sids_info = []
             for sid in sids:
-                if sid in rocksdb_map:
+                if sid in rocksdb_map and rocksdb_map[sid]['values']!=[]:
                     # SID found, format it to exact structure
-                    final_sids_info.append(format_item(rocksdb_map[sid]))
+                    final_sids_info.append(format_item({**rocksdb_map[sid]['values'][0],'sid':sid}))
                 else:
                     # SID missing in RocksDB response, append null structure
                     final_sids_info.append(create_null_item(sid))

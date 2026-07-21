@@ -181,8 +181,8 @@ def get_all_sids_date(opt_id: str, date_str: str, limit: int = 50, page: int = 1
                 value_entry = values[0] if values else {}
                 details_map[sid_value] = value_entry
         
-        print(details_data,'details data')
-
+        print(details_map,'details data')
+        print(page_sids, 'page sids')
         # Build final response list
         sid_det = []
         for sid in page_sids:
