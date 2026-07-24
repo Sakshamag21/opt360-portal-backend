@@ -1,0 +1,84 @@
+features:
+
+  - name: sustxn_parallel_enrolment_eid_count_daily
+    table: sustxn_parallel_enrolment_eid_count_daily_v1
+    template: daily_latest.sql
+
+  - name: sustxn_parallel_enrolment_eid_count_monthly
+    table: sustxn_parallel_enrolment_eid_count_daily_v1
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: sustxn_oddhour_pkts_instances
+    table: sustxn_oddhour_pkts_instances_24h_v2
+    template: daily_latest.sql
+
+  - name: sustxn_outstate_pkts_instances
+    table: sustxn_outstate_pkts_instances_24h_v2
+    template: daily_latest.sql
+
+  - name: sustxn_outstate_pkts_instances_monthly
+    table: sustxn_outstate_pkts_instances_24h_v2
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: work_pob_declared_instances
+    table: work_pob_declared_instances_v1
+    template: yearly_sum.sql
+
+  - name: work_packet_upload_update_count_daily
+    table: work_packet_upload_update_count_hourly_v1
+    template: daily_sum.sql
+
+  - name: work_packet_upload_new_count_daily
+    table: work_packet_upload_new_count_hourly_v1
+    template: daily_sum.sql
+
+  - name: work_packet_upload_update_count_monthly
+    table: work_packet_upload_update_count_hourly_v1
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: work_packet_upload_new_count_monthly
+    table: work_packet_upload_new_count_hourly_v1
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: work_machineip_isp_change_count_daily
+    table: work_machineip_isp_change_count_daily_v1
+    template: daily_latest.sql
+
+  - name: work_machine_unique_count_daily
+    table: work_machine_unique_count_daily_v1
+    template: daily_latest.sql
+
+  - name: work_machine_unique_count_monthly
+    table: work_machine_unique_count_daily_v1
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: auth_biomismatch_incidents_daily
+    table: auth_biomismatch_incidents_24h_v1
+    template: daily_latest.sql
+
+  - name: auth_liveness_failure_incidents_daily
+    table: auth_liveness_failure_incidents_24h_v2
+    template: daily_latest.sql
+
+  - name: auth_biomismatch_incidents_monthly
+    table: auth_biomismatch_incidents_24h_v1
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: auth_liveness_failure_incidents_monthly
+    table: auth_liveness_failure_incidents_24h_v2
+    template: rolling_sum.sql
+    window_days: 30
+
+  - name: auth_txn_failure_count
+    table: auth_txn_failure_count_1h_v1
+    template: daily_sum.sql
+
+  - name: auth_txn_success_count
+    table: auth_txn_success_count_1h_v1
+    template: daily_sum.sql

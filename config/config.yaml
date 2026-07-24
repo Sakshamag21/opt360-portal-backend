@@ -1,0 +1,19 @@
+trino:
+  host: trino-host
+  port: 8080
+  user: etl
+  catalog: iceberg
+  schema: feature_store
+
+clickhouse:
+  host: clickhouse-host
+  port: 8123
+  username: default
+  password: ""
+  database: feature_store
+
+batch_size: 100000
+
+retry:
+  attempts: 3
+  wait_seconds: 10
