@@ -1,57 +1,46 @@
-# Use your base image
-FROM harbor-registry-non-prod.uidai.gov.in/data-platform/python-base-3:1.0.0
+# ---- Build stage ----
+FROM golang:1.25-bookworm AS build
 
-# ---- Global env ----
-ENV HTTP_PROXY="" \
-    http_proxy="" \
-    HTTPS_PROXY="" \
-    https_proxy="" \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    # Centralizing Pip Config
-    PIP_INDEX_URL=http://10.10.206.59:8080/repository/pypi-proxy/simple \
-    PIP_TRUSTED_HOST=10.10.206.59 \
-    PIP_EXTRA_INDEX_URL=http://10.10.206.59:8080/repository/pypi-third-party/ \
-    PIP_ROOT_USER_ACTION=ignore
+# If your network requires an internal Go module proxy (mirroring the
+# PIP_INDEX_URL / PIP_TRUSTED_HOST setup in the previous Python build),
+# set it here, e.g.:
+# ENV GOPROXY=http://10.10.206.59:8080/repository/go-proxy/ \
+#     GONOSUMCHECK=1 \
+#     GOFLAGS=-insecure
+ENV CGO_ENABLED=0 \
+    GOOS=linux
 
-# Set internal Ubuntu mirrors
-RUN echo "deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu jammy restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-updates restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-security restricted universe main multiverse\n\
-deb http://10.10.213.11:8081/ubuntu/mirror/archive.ubuntu.com/ubuntu/ jammy-backports restricted universe main multiverse" > /etc/apt/sources.list
-
-# Working directory setup
 WORKDIR /app
 
-# Copy requirements first for better layer caching
-COPY requirements.txt .
+# Copy go.mod/go.sum first for better layer caching
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Upgrade tooling, handle OpenCV cleanup, install requirements, and generate SBOM in one layer
-RUN python3 -m pip install --upgrade --no-cache-dir pip setuptools wheel && \
-    (python3 -m pip uninstall -y opencv-python-headless opencv-python || true) && \
-    python3 -m pip install --no-cache-dir -r requirements.txt && \
-    # Install CycloneDX
-    python3 -m pip install --no-cache-dir cyclonedx-bom && \
-    # Change output path to /SCA-bom.json to match your 'docker cp' command
-    python3 -m cyclonedx_py requirements --of JSON -o /SCA-bom.json requirements.txt && \
-    # Cleanup
-    python3 -m pip uninstall -y cyclonedx-bom
+# Copy application code and build a static binary
+COPY main.go ./
+COPY internal/ ./internal/
+RUN go build -o /operator360-api .
 
+# Generate a CycloneDX SBOM for the module graph (mirrors the
+# cyclonedx-py step in the previous Python build)
+RUN go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest && \
+    cyclonedx-gomod mod -json -output /SCA-bom.json .
 
-# Copy application code and resources
-COPY src/ ./src/
+# ---- Runtime stage ----
+FROM gcr.io/distroless/static-debian12:nonroot AS runtime
+
+WORKDIR /app
+
+# Copy application binary, resources, and generated SBOM
+COPY --from=build /operator360-api ./operator360-api
 COPY resources/ ./resources/
+COPY --from=build /SCA-bom.json /SCA-bom.json
 
-# ---- Security: Non-root user setup ----
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
+# distroless "nonroot" images already run as a non-root user (65532:65532)
+USER nonroot:nonroot
 
 # Expose application port
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "src/main.py"]
-
+ENTRYPOINT ["./operator360-api"]

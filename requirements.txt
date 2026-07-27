@@ -1,4 +1,0 @@
-fastapi[standard]
-uvicorn==0.41.0
-mysql-connector-python
-requests

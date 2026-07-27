@@ -1,15 +1,7 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-pyvenv/
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# Go
+*.exe
+*.test
+*.out
 
 # IDE
 .vscode/
@@ -30,11 +22,7 @@ Dockerfile
 # Documentation
 README.md
 *.md
-
-# Tests
-tests/
-test_*.py
-*_test.py
+documentation.txt
 
 # CI/CD
 .github/

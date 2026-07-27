@@ -1,7 +1,11 @@
-pyvenv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/operator360-api
+
 k8s/

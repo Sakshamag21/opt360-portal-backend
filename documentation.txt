@@ -1,0 +1,334 @@
+================================================================================
+OPERATOR360 API - PROJECT DOCUMENTATION
+================================================================================
+Version   : 1.1.8-SNAPSHOT (see version.json)
+Language  : Go 1.25+ (net/http standard library, no web framework)
+Purpose   : Backend service for the Operator360 system. Exposes REST endpoints
+            to create/retrieve "features" and "signals" (a feature-flag /
+            risk-signal style registry backed by MySQL), and to look up
+            operator (field agent) metadata and enrolment packet (SID)
+            details backed by external RocksDB-based microservices.
+
+NOTE: This service was originally implemented in Python (FastAPI) and has
+been fully rewritten in Go. The Python source (src/, requirements.txt) has
+been removed from the repository; it remains recoverable from git history if
+needed for reference.
+
+================================================================================
+1. TECH STACK
+================================================================================
+- Go 1.25+
+- net/http standard library (Go 1.22+ enhanced ServeMux: method + path
+  parameter routing, e.g. "GET /api/signal/info/{feature_id}") - no external
+  web framework dependency.
+- github.com/go-sql-driver/mysql - pure-Go MySQL driver, used via
+  database/sql connection pooling.
+- gopkg.in/yaml.v3 - resources/config.yaml parsing.
+
+Containerization:
+- Multi-stage Dockerfile: `golang:1.25-bookworm` build stage compiles a
+  static (CGO_ENABLED=0) binary and generates a CycloneDX SBOM via
+  cyclonedx-gomod; the runtime stage is
+  `gcr.io/distroless/static-debian12:nonroot` (no shell, runs as the
+  built-in non-root user).
+- Exposes port 8000, entrypoint: the compiled `operator360-api` binary.
+
+================================================================================
+2. PROJECT STRUCTURE
+================================================================================
+operator360-api/
+|-- Dockerfile                  Multi-stage container build definition
+|-- README.md                   Quick-start + sample API contracts
+|-- go.mod / go.sum              Go module dependencies
+|-- version.json                App name/version metadata
+|-- resources/
+|   `-- config.yaml              Runtime configuration (DB + RocksDB endpoints)
+|-- main.go                     Entrypoint: loads config, opens DB pool, registers routes, starts server
+`-- internal/
+    |-- config/
+    |   `-- config.go            YAML config loader (config.Load)
+    |-- database/
+    |   `-- database.go          MySQL connection pool + generic query/write helpers
+    |-- response/
+    |   `-- response.go          Standard {success, message, data} response envelope
+    |-- messages/
+    |   `-- messages.go          Message string templates (Signal/Feature/Error)
+    |-- queries/
+    |   `-- queries.go           SQL query template builders (Signal/Feature/OperatorDetail)
+    `-- server/
+        |-- server.go            Server struct (shared deps) + JSON helpers
+        |-- routes.go            Route registration (mirrors the old routers list)
+        |-- health.go            Health check + self-describing /api/endpoints catalogue
+        |-- signals.go           Signal create + active-signal lookups
+        |-- features.go          Feature lookup with dynamic filters
+        |-- optdetails.go        Operator metadata lookup by operator_id and by SID
+        |-- siddetails.go        Batch SID detail lookup from RocksDB SID store
+        |-- allsids.go           List all SIDs for an operator/date, paginated, cached
+        |-- sidrequest.go        Request body validation for /sid_details/sids/all
+        |-- cache.go             TTL + size-bounded in-process cache for SID lists
+        `-- httpclient.go        Shared helper for outbound POST-JSON calls to RocksDB
+
+================================================================================
+3. APPLICATION ENTRYPOINT (main.go)
+================================================================================
+- Reads the config file path from the CONFIG_PATH environment variable
+  (default "resources/config.yaml", resolved relative to the working
+  directory - the Docker image's WORKDIR is /app, matching where
+  resources/ is copied).
+- Loads configuration via config.Load, opens a MySQL connection pool via
+  database.Open(cfg.DSN()), and constructs a server.Server with derived
+  SQL query templates.
+- Registers all routes onto a single http.ServeMux under the "/api" prefix.
+- Starts the HTTP server on host 0.0.0.0, port taken from the PORT
+  environment variable (default 8000).
+
+Run locally with:
+    go run .
+Or build and run a binary:
+    go build -o operator360-api . && ./operator360-api
+
+================================================================================
+4. CONFIGURATION (internal/config/config.go, resources/config.yaml)
+================================================================================
+`config.Load(path)` reads and YAML-unmarshals resources/config.yaml into a
+`*Config` struct (no singleton - the loaded config is passed explicitly into
+`server.New` and stored on the `Server` struct).
+
+resources/config.yaml defines (unchanged from the original Python service):
+- database:            MySQL connection (host, port, username, password, name)
+    tables:             logical table name mapping
+      feature_registry -> features
+      signal_registry  -> signals
+      opt_registry     -> opt_master
+- rocksdb / rocksdb_sid_store:
+    host/port/endpoint for the SID batch-get service (/sid/batch_get)
+    (Both keys currently point at the same host/port/endpoint.)
+- rocksdb_operator_store:
+    host/port/endpoint for the operator-by-date service (/optid/get_by_date)
+
+`Config.DSN()` builds a go-sql-driver/mysql data source name
+(user:pass@tcp(host:port)/name?parseTime=true) from the `database` section.
+`RocksDBEndpoint.URL()` builds the full "http://host:port/endpoint" URL for
+each RocksDB service.
+
+NOTE: config.yaml contains plaintext database credentials for the current
+environment. Treat this file as sensitive; avoid committing real production
+secrets to source control (consider environment variable overrides or a
+secrets manager).
+
+================================================================================
+5. DATABASE LAYER (internal/database/database.go)
+================================================================================
+`DB` wraps a pooled `*sql.DB` (database/sql already pools connections; no
+separate pooling library is needed as in the Python version):
+- Pool sized to 5 open/idle connections (`PoolSize = 5`), matching the
+  original mysql-connector-python pool_size.
+- `ExecuteQuery(query, params...)` - runs a SELECT, returns
+  `[]map[string]any` (one map per row, keyed by column name). `[]byte`
+  column values (MySQL's text-protocol representation of
+  VARCHAR/TEXT/DECIMAL) are normalized to Go strings so results marshal
+  cleanly to JSON.
+- `ExecuteQueryOne(query, params...)` - returns only the first row, or nil.
+- `ExecuteWrite(query, params...)` - runs INSERT/UPDATE/DELETE; returns the
+  last inserted ID for INSERT, or the affected row count otherwise.
+- `TestConnection()` - pings the pool; used by GET /api/health.
+
+================================================================================
+6. RESPONSE ENVELOPE (internal/response/response.go)
+================================================================================
+Every handler returns a consistent JSON shape via `response.Response`:
+  {
+    "success": <bool>,
+    "message": "<human-readable message>",
+    "data": { ... }
+  }
+Helpers: `response.Success(message, data)` and `response.Error(message, data)`.
+A nil `data` map is normalized to `{}` so the JSON shape is always consistent.
+
+================================================================================
+7. QUERY & MESSAGE TEMPLATES (internal/queries/, internal/messages/)
+================================================================================
+`internal/queries/queries.go` exposes small structs (`SignalQueries`,
+`FeatureQueries`, `OperatorDetailQueries`) constructed once at startup
+(`server.New`) from the table names resolved out of config.yaml, with
+methods returning the parameterized SQL string for each query (using `?`
+placeholders, as required by go-sql-driver/mysql):
+- SignalQueries: CreateSignal, RetrieveSignalVersion, RetrieveSignalActive,
+  RetrieveSignalByID
+- FeatureQueries: CreateFeature, RetrieveFeatureVersion,
+  GetFeatureMetadataGlobal (base query ending in "WHERE ", dynamic filters
+  appended in features.go)
+- OperatorDetailQueries: GetOperatorMetadata (maps DB columns to camelCase
+  API fields: optId, regCode, eaCode, riskScore, etc.; machineCode is
+  hardcoded to '' at the SQL level, same as the original)
+
+`internal/messages/messages.go` centralizes user-facing string templates as
+functions (Go has no Python-style `.format()` on string constants) for
+signal creation, feature retrieval, and error messages.
+
+================================================================================
+8. API ENDPOINTS (internal/server/routes.go, all mounted under /api)
+================================================================================
+
+--- Health ---------------------------------------------------------------
+GET  /api/
+  Basic health check. Returns status, service name, and configured DB host.
+
+GET  /api/health
+  Detailed health check; actively pings the MySQL pool via DB.TestConnection().
+  Returns "healthy"/"degraded" and "connected"/"disconnected".
+
+GET  /api/endpoints
+  Self-describing endpoint: returns a static JSON catalogue of the API's
+  documented routes, methods, params, and example request bodies. Points to
+  documentation.txt (there is no auto-generated Swagger/OpenAPI UI in the Go
+  version, unlike FastAPI's /docs and /redoc).
+
+--- Signals ("/api/signal") ----------------------------------------------
+POST /api/signal/create
+  Body (all required): id, name, description, feature_id, feature_version,
+  threshold, severity_level, user.
+  Behavior: looks up the current max version for (id, feature_id) via
+  RetrieveSignalVersion, increments it (starts at 1 if none exists), then
+  inserts a new row (signals are versioned/append-only, not updated in place).
+  Returns a success message with the new version embedded, or a validation/
+  DB error.
+
+GET  /api/signal/info/{feature_id}
+  Returns all *active* signals (active = true) for the given feature_id.
+
+GET  /api/signal/info/id/{signal_id}
+  Returns all *active* signals matching the given signal_id.
+
+--- Features ("/api/feature") ---------------------------------------------
+POST /api/feature/info/
+  Body: all fields optional - feature_id, version, active, is_risk, status.
+  Dynamically builds a WHERE clause by AND-ing whichever filters are present;
+  with an empty body, returns every feature row. feature_id filters on the
+  `feature_name` column (aliased as `id` in the SELECT).
+  There is no feature-creation endpoint - the original Python
+  create_feature.py was an unimplemented stub with no route wired to it, so
+  it was not ported.
+
+--- Operator Details ("/api/opt_details") ---------------------------------
+POST /api/opt_details/info
+  Body: { "operator_id": "<string>" } (field must be present in the JSON
+  body or the server responds 422, approximating FastAPI's automatic
+  required-field validation).
+  Looks up operator metadata from opt_master by id (input is upper-cased
+  before the query). Returns operator fields: optId, name, email, reg,
+  regCode, ea, eaCode, pincode, district, state, ro, machineCode (always ''
+  from SQL), riskScore.
+
+GET  /api/opt_details/sid/{sid}
+  Resolves an operator via a SID (enrolment packet ID) instead of an
+  operator_id directly:
+    1. POSTs {"sids": [sid]} to the `rocksdb` endpoint
+       (rocksdb.host:port + rocksdb.endpoint, e.g. /sid/batch_get).
+    2. On a match (status "OK", found == 1), extracts opt_id and pkt_type
+       from the first item/value.
+    3. Calls Server.GetOperatorDetails(optID) directly in-process (a plain
+       Go function call, not an HTTP round-trip) to fetch operator metadata
+       from MySQL.
+    4. Merges the operator record with pktType, id (the sid), and
+       idType: "sid", and returns it.
+  Because both call sites are strongly-typed Go functions under our control,
+  this port is simpler than the Python original, which had to defensively
+  handle several possible internal response shapes (raw list vs. dict
+  wrapper) - that defensive branching was a smell from crossing an
+  in-process "fake HTTP boundary" and has been removed; the Go version
+  always gets a single well-defined shape back from GetOperatorDetails.
+
+--- SID Details ("/api/sid_details") --------------------------------------
+POST /api/sid_details/sids/all
+  Body: opt_id (string, required), date (string, "YYYY-MM-DD", required and
+  validated/reformatted - malformed dates return HTTP 422), limit (int,
+  parsed but ignored - see Known Gaps), page (int, default 1, coerced to 1
+  if <= 0).
+  Behavior:
+    1. Looks up (or fetches from `rocksdb_operator_store`) the full list of
+       SIDs for the given opt_id + date, using an in-process cache (see
+       Caching section below) keyed by "sids:{opt_id}:{date}".
+    2. Applies offset-based pagination (page/limit) to the SID list, with
+       explicit bounds clamping (see Known Gaps / Go-specific notes).
+    3. For the current page's SIDs, calls Server.GetSidDetails() to
+       batch-fetch enrichment data (opt_id, pkt_type, station_id,
+       machine_code, created_at) from the `rocksdb_sid_store` endpoint.
+    4. Merges enrichment data onto each SID and returns a paginated payload:
+       { sids: [...], total_sids, total_pages, current_page, page_size }.
+
+================================================================================
+9. IN-PROCESS CACHING (internal/server/cache.go, allsids.go)
+================================================================================
+A hand-rolled, process-local cache (not Redis/Memcached) guards the
+"all SIDs for operator+date" RocksDB lookup, ported 1:1 from the original
+Python design:
+- Keyed by `sids:{opt_id}:{date}`.
+- TTL: 300 seconds per entry.
+- Size-bounded: evicts least-recently-accessed entries once total cached
+  payload size exceeds maxBytes (5 MB, set in server.New).
+- Per-key locking (`sidCache.locks` + a `sidCache.mu` global mutex) prevents
+  duplicate concurrent RocksDB fetches for the same key (double-checked
+  locking: check cache -> acquire per-key lock -> re-check cache -> fetch).
+- Because this cache lives in process memory, it is NOT shared across
+  multiple server instances/replicas and resets on every restart/deploy.
+
+Go-specific note: Python list slicing silently clamps out-of-range indices
+(e.g. `list[100:200]` on a 5-element list just returns `[]` instead of
+panicking). Go slice expressions panic on out-of-range indices. The
+pagination math in allsids.go explicitly clamps startIndex/endIndex into
+[0, len(allSids)] before slicing to preserve the original "out-of-range page
+returns an empty page" behavior instead of crashing the request.
+
+================================================================================
+10. EXTERNAL DEPENDENCIES / INTEGRATIONS
+================================================================================
+- MySQL database "operator360" (features, signals, opt_master tables) -
+  primary system of record for feature/signal registries and operator
+  metadata.
+- RocksDB-backed HTTP microservice(s):
+    * /sid/batch_get         - resolve operator_id + pkt_type from a SID
+    * /optid/get_by_date      - list all SIDs for an operator on a given date
+  These are separate internal services reached over plain HTTP (not HTTPS)
+  using hardcoded IP:port values from config.yaml.
+
+================================================================================
+11. DEPLOYMENT
+================================================================================
+- Dockerfile is a multi-stage build: `golang:1.25-bookworm` compiles a
+  static binary and generates a CycloneDX SBOM (cyclonedx-gomod); the
+  runtime image is `gcr.io/distroless/static-debian12:nonroot` (no shell,
+  minimal attack surface, runs as a built-in non-root user).
+  NOTE: this uses public images as a generic starting point. The original
+  Python Dockerfile used an internal UIDAI-approved base image
+  (harbor-registry-non-prod.uidai.gov.in/data-platform/python-base-3) and
+  internal pip/apt mirrors - if your environment requires an internal base
+  image or Go module proxy (GOPROXY), swap those in before deploying.
+- README notes a currently deployed instance at 10.10.118.48:8000 (from the
+  prior Python deployment; redeploy with the Go build to update it).
+- No CI/CD pipeline or automated test suite is present in this repo at the
+  time of writing.
+
+================================================================================
+12. KNOWN GAPS / THINGS TO BE AWARE OF
+================================================================================
+- There is no "create feature" API route (only POST /api/feature/info/ for
+  reads) - the original Python create_feature.py was an unimplemented stub
+  with no route wired to it, so nothing was ported for it.
+- Signals are immutable/versioned: "create" always inserts a new row with
+  an incremented version rather than updating existing signals; there is
+  no dedicated "get by version" filter exposed via the API beyond the
+  active-only lookups.
+- POST /api/sid_details/sids/all accepts a `limit` field in its request
+  body but the handler ignores it and hardcodes limit=50
+  (internal/server/sidrequest.go), matching the original Python route's
+  behavior verbatim (routes.py hardcoded `limit = 50` regardless of the
+  parsed request field) - this was flagged as a gap in the original and was
+  preserved rather than silently fixed during the port.
+- config.yaml stores database credentials in plaintext and is checked into
+  the repo; rotate/secure these before treating this as production-hardened.
+- There is no automated OpenAPI/Swagger UI (FastAPI's /docs and /redoc have
+  no Go equivalent here) - GET /api/endpoints remains the closest thing to
+  self-documentation, backed by this file.
+- No automated tests are present in the repository.
+================================================================================
