@@ -1,0 +1,7 @@
+config.json
+*.exe
+
+# NOTE: .git is intentionally NOT excluded — the build's cyclonedx-gomod SBOM
+# step (Dockerfile) needs the git repo present to determine the main module's
+# version. Excluding it breaks `cyclonedx-gomod app -main .` with
+# "failed to determine version of main module: no git repository found".
