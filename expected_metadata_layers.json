@@ -1,0 +1,33 @@
+{
+    "layer1":{
+        
+        "dags":["auth_category_features",
+                "bio_packet_fraud_features",
+                "document_features_combined",
+                "hardware_category_features",
+                "work_category_features",
+                "sustxn_category_feature"],
+        "expected_output_layer1":{
+            dag success or failed
+        }
+        },
+    "layer2":{
+        "dags":["instance_scoring_dag"]
+        "input":"output from layer 1",
+        "expected_output_layer2":{
+            each catgeory scoring success or failed
+        }
+    },
+
+    "layer3":{
+        "dags":['ctageory_scoring_dag']
+        "input":"output from layer 2",
+        "expected_output_layer3":{
+            success or failed
+        }
+
+    }
+
+
+    
+}
