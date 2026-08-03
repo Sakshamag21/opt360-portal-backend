@@ -1,0 +1,692 @@
+{
+  "opt_id":  "WCD_RJ_UD_NS887326",
+  "kpis":  [
+    {
+      "Authentication Transaction Features":  [
+        {
+          "feature_id":  "auth_txn_gap_sec",
+          "feature_name":  "Authentication transaction Gap",
+          "feature_type":  "Duration",
+          "feature_description":  "Gap in seconds between Two Consecutive Authentications",
+          "feature_value":  "1.2 hr",
+          "remarks":  {
+            "99 Percentile of Authentication have Transaction Gap":  "21.4 min",
+            "Operators Average Authentication have Transaction Gap":  "1.2 hr",
+            "Operators Standard Deviation Authentication have Transaction Gap":  "2.3 hr",
+            "Max Value of Authentication have Transaction Gap for operator":  "14.09 hr",
+            "Maximum Value occured at Timestamp":  "2026-01-02 09:19:09",
+            "Min Value of Authentication have Transaction Gap for operator":  "1.0 sec",
+            "Minimum Value occured at Timestamp":  "2025-12-31 04:23:46"
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "auth_txn_success_gap_sec",
+          "feature_name":  "Authentication transaction Success Gap",
+          "feature_type":  "Duration",
+          "feature_description":  "Number of Retry Authentication Attempts before Success",
+          "feature_value": "51.95 min",
+          "remarks":  {
+            "99 Percentile of Success Authentication have Transaction Gap":  "22 min",
+            "Operators Average Success Authentication have Transaction Gap":  "51.95 min",
+            "Operators Standard Deviation Success Authentication have Transaction Gap":  "1.3 hr",
+            "Max Value of Success Authentication have Transaction Gap for operator":  "6.8 hr",
+            "Maximum Value occured at Timestamp":  "2025-12-31 03:52:49",
+            "Min Value of Success Authentication have Transaction Gap for operator":  "1.0 sec",
+            "Minimum Value occured at Timestamp":  "2025-12-31 04:23:46"
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "auth_retry_attempts",
+          "feature_name":  "Authentication Retry Attempts",
+          "feature_type":  "Count",
+          "feature_description":  "Gap in seconds between Two Success Consecutive Authentications",
+          "feature_value":  2.0,
+          "remarks":  {
+            "99 Percentile of Authentication have Retry Attempts":  1.0,
+            "Operators Average Authentication have Retry Attempts":  2.0,
+            "Operators Standard Deviation Authentication have Retry Attempts":  1.73,
+            "Max Value of Authentication have Retry Attempts for operator":  5.0,
+            "Maximum Value occured at Timestamp":  "2026-01-01 08:47:34",
+            "Min Value of Authentication have Retry Attempts for operator":  1.0,
+            "Minimum Value occured at Timestamp":  "2026-01-02 09:20:15"
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "auth_txn_failure_gap_sec",
+          "feature_name":  "Authentication Transaction Failure Gap",
+          "feature_type":  "Duration",
+          "feature_description":  "Gap in seconds between Two Failure Consecutive Authentications",
+          "feature_value":  "2.9 hr",
+          "remarks":  {
+            "99 Percentile of Failure Authentication have Transaction Gap":  "9.0 sec",
+            "Operators Average Failure Authentication have Transaction Gap":  "2.9 hr",
+            "Operators Standard Deviation Failure Authentication have Transaction Gap":  "5.4 hr",
+            "Max Value of Failure Authentication have Transaction Gap for operator":  "13.8 hr",
+            "Maximum Value occured at Timestamp":  "2026-01-02 09:19:09",
+            "Min Value of Failure Authentication have Transaction Gap for operator":  "5.0 sec",
+            "Minimum Value occured at Timestamp":  "2026-01-01 08:46:55"
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "auth_retry_duration_sec",
+          "feature_name":  "Authentication Retry Duration",
+          "feature_type":  "Duration",
+          "feature_description":  "Duration of Retry Authentication Attempts before Success",
+          "feature_value":  "19.0 sec",
+          "remarks":  {
+            "99 Percentile of Authentication have Retry Duration":  "14.0 sec",
+            "Operators Average Authentication have Retry Duration":  "19.0 sec",
+            "Operators Standard Deviation Authentication have Retry Duration":  "11.87 sec",
+            "Max Value of Authentication have Retry Duration for operator":  "35.0 sec",
+            "Maximum Value occured at Timestamp":  "2026-01-01 08:47:34",
+            "Min Value of Authentication have Retry Duration for operator":  "8.0 sec",
+            "Minimum Value occured at Timestamp":  "2025-12-31 09:29:51"
+          },
+          "feature_graph": {
+            
+          }
+        }
+      ],
+      "Authentication Modality Devices Changing":  [
+        {
+          "feature_id":  "modalities_count",
+          "feature_name":  "Number of Modalities",
+          "feature_type":  "Count",
+          "feature_description":  "No of Modalities used by Operator for Authentication",
+          "feature_value":  2,
+          "remarks":  {
+            "Different Types of Modalities Operator Use":  [
+              "F",
+              "P"
+            ],
+            "No of Modalities Operator Use":  2
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "F",
+          "feature_name":  "Finger Devices for Authentication",
+          "feature_type":  "Count",
+          "feature_description":  "Finger Authentication Devices used by Operator for Authentication",
+          "feature_value":  3,
+          "remarks":  {
+            "Different Finger devices used by operator":  [
+              "8e2672c8-c41f-4be2-9ba5-4ae00afa2e6e",
+              "b45363bb-5187-422e-b0aa-57cbd3709fd3",
+              "f1c76a69-6841-4fec-8d7e-d1f36ed18b23"
+            ],
+            "Count of Finger devices used by operator":  3,
+            "Avg Frequency of the Finger Modality used for Authentication":  8.3
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "P",
+          "feature_name":  "Face Authentication Devices used by Operator for Authentication",
+          "feature_type":  "Count",
+          "feature_description":  "Face Authentication Devices used by Operator for Authentication",
+          "feature_value":  2,
+          "remarks":  {
+            "Different Face devices used by operator":  [
+              "6a34b4aa-2446-4e3f-864a-7ac49147afe4",
+              "e8e95840-0b52-4a68-a2b4-5b0ec3582e5e"
+            ],
+            "Count of Face devices used by operator":  2,
+            "Avg Frequency of the Face Modality used for Authentication":  2.4
+          },
+          "feature_graph": {
+            
+          }
+        }
+      ],
+      "Machine Sync Features":  [
+        {
+          "feature_id":  "avg_sync",
+          "feature_name":  "Operator Sync Duration Average Gap",
+          "feature_type":  "Duration",
+          "feature_description":  "Operator Average Sync Duration Gap in a Month",
+          "feature_value":  "48 min",
+          "remarks":  {
+            "Average Machine Sync Duration of Operator Globally":  "48 min",
+            "Average Machine Sync Duration of Operator's District":  "45.3 min",
+            "Average Machine Sync Duration of Operator's State":  "36.75 min"
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "avg_sync_count",
+          "feature_name":  "Operator Machihne Sync Instances",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Monthly Machine Sync Instances in a Month",
+          "feature_value":  17,
+          "remarks":  {
+            "Number of Machines used by Operator Globally":  17,
+            "Average No of Machine Sync of Operator's District":  4.37,
+            "Average No of Machine Sync of Operator's State":  4.53
+          },
+          "feature_graph": {
+            
+          }
+        }
+      ],
+      "Packet Metrics":  [
+        {
+          "feature_id":  "pkt_txn_hrly_n_uc",
+          "feature_name":  "New Enrolments through UC",
+          "feature_type":  "Count",
+          "feature_description":  "Enrolments Packets made by Operator using UC",
+          "feature_value":  0,
+          "remarks":  {
+            "Total Packets In a Month":  0,
+            "Packet Creation Frequency per Day":  0.0
+          },
+          "feature_graph": {
+            "graph_type": "line chart",
+            "graph_heading": "",
+            "graph_x_label": "Day Hours",
+            "graph_y_label": "Number of Packets",
+            "graph_description": "",
+            "graph_data": {
+              "0": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "1": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "2": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "3": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "4": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "5": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "6": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "7": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "8": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "9": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "10": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "11": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "12": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "13": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "14": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "15": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "16": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "17": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "18": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "19": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "20": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "21": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "22": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ],
+              "23": [
+                {
+                  "Maximum over last 30 days": 10
+                },
+                 {
+                  "Minimum over last 30 days": 1
+                },
+                {
+                  "Average over last 30 days": 3
+                }
+              ]
+            }
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_u_uc",
+          "feature_name":  "Update Packets through UC",
+          "feature_type":  "Count",
+          "feature_description":  "Update Packets made by Operator through UC in a month",
+          "feature_value":  4,
+          "remarks":  {
+            "Total Packets In a Month":  4,
+            "Packet Creation Frequency per Day":  0.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly",
+          "feature_name":  "Total Packets",
+          "feature_type":  "Count",
+          "feature_description":  "Packets made by operator in a month",
+          "feature_value":  462,
+          "remarks":  {
+            "Total Packets In a Month":  462,
+            "Packet Creation Frequency per Day":  20.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_n_celc",
+          "feature_name":  "New Child Enrolments Packets",
+          "feature_type":  "Count",
+          "feature_description":  "Child Enrolment Packets made by the Operator in a Month",
+          "feature_value":  0,
+          "remarks":  {
+            "Total Packets In a Month":  0,
+            "Packet Creation Frequency per Day":  0.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_n_ecmp",
+          "feature_name":  "New Enrolments through ECMP",
+          "feature_type":  "Count",
+          "feature_description":  "Enrolments Packets made by Operator using ECMP",
+          "feature_value":  57,
+          "remarks":  {
+            "Total Packets In a Month":  57,
+            "Packet Creation Frequency per Day":  2.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_n",
+          "feature_name":  "New Enrolment Packets",
+          "feature_type":  "Count",
+          "feature_description":  "New Enrolments Packets Operator made in a Month",
+          "feature_value":  57,
+          "remarks":  {
+            "Total Packets In a Month":  57,
+            "Packet Creation Frequency per Day":  2.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_u_celc",
+          "feature_name":  "Update Child Packets",
+          "feature_type":  "Count",
+          "feature_description":  "Child Update Packets made by Operator",
+          "feature_value":  0,
+          "remarks":  {
+            "Total Packets In a Month":  0,
+            "Packet Creation Frequency per Day":  0.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_u_ecmp",
+          "feature_name":  "Update Packets through ECMP",
+          "feature_type":  "Count",
+          "feature_description":  "Update Packets through ECMP Operator made in a Month",
+          "feature_value":  401,
+          "remarks":  {
+            "Total Packets In a Month":  401,
+            "Packet Creation Frequency per Day":  17.0
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "pkt_txn_hrly_u",
+          "feature_name":  "Update Packets",
+          "feature_type":  "Count",
+          "feature_description":  "Update Packets Operator made in a Month",
+          "feature_value":  405,
+          "remarks":  {
+            "Total Packets In a Month":  405,
+            "Packet Creation Frequency per Day":  17.0
+          },
+          "feature_graph": {
+            
+          }
+        }
+      ],
+      "QC Analysis":  [
+        {
+          "feature_id":  "qc_pkts_create_daily_error_grave",
+          "feature_name":  "Grave Category Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC in Grave category this Month",
+          "feature_value":  0,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "qc_pkts_create_daily_error_doe2",
+          "feature_name":  "DOE2 Category Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC in DOE2 category this Month",
+          "feature_value":  0,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "qc_pkts_create_daily_error_de",
+          "feature_name":  "DE Category Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC in DE category this Month",
+          "feature_value":  24,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "qc_pkts_create_daily_error_be",
+          "feature_name":  "BE Category Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC in BE category this Month",
+          "feature_value":  0,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "qc_pkts_create_daily_error_pop",
+          "feature_name":  "POP Category Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC in POP category this Month",
+          "feature_value":  0,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            
+          }
+        },
+        {
+          "feature_id":  "qc_pkts_create_daily_error",
+          "feature_name":  "Total QC Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC this Month",
+          "feature_value":  24,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            "graph_type": "pie",
+            "graph_heading": "",
+            "graph_data": {
+              "DOE1 Count": 0,
+              "DOE2 Count": 0,
+              "DE Count": 24,
+              "BE Count": 0,
+              "POP Count": 0,
+              "Grave Count": 0
+            }
+          }
+        },
+        {
+          "feature_id":  "qc_pkts_create_daily_error_doe1",
+          "feature_name":  "DOE1 Category Errors",
+          "feature_type":  "Count",
+          "feature_description":  "Operator Packets marked as Error by the QC in DOE1 category this Month",
+          "feature_value":  0,
+          "remarks":  {
+            
+          },
+          "feature_graph": {
+            
+          }
+        }
+      ]
+    }
+  ]
+}

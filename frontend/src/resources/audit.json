@@ -1,0 +1,675 @@
+{
+  "opt_distribution": {
+    "Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 911,
+      "no_risk": 2557
+    },
+    "Punjab": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1145,
+      "no_risk": 2166
+    },
+    "Himachal Pradesh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 308,
+      "no_risk": 1672
+    },
+    "Jammu and Kashmir": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 658,
+      "no_risk": 1767
+    },
+    "Chandigarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 68,
+      "no_risk": 198
+    },
+    "Ladakh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 37,
+      "no_risk": 71
+    },
+    "": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 2,
+      "no_risk": 100
+    },
+    "Delhi": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 3
+    },
+    "Maharashtra": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 1
+    }
+  },
+  "ea_distribution": {
+    "CRID Faridabad": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 23,
+      "no_risk": 176
+    },
+    "Punjab State e- Governance Society": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 965,
+      "no_risk": 1303
+    },
+    "Department of IT, Govt. of HP": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 189,
+      "no_risk": 1326
+    },
+    "Directorate of Secondary Education, Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 316,
+      "no_risk": 592
+    },
+    "State Project Director SSA  Department of Education JK": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 397,
+      "no_risk": 630
+    },
+    "Labour Department Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 54,
+      "no_risk": 170
+    },
+    "State Mission Director ICDS Social Welfare Department, J&K": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 255,
+      "no_risk": 804
+    },
+    "Department of School Education, Govt. of Punjab ": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 103,
+      "no_risk": 475
+    },
+    "State Project Director SSA-RMSA-HP": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 111,
+      "no_risk": 60
+    },
+    "Department of IT, Chandigarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 68,
+      "no_risk": 97
+    },
+    "CRID Karnal": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 17,
+      "no_risk": 121
+    },
+    "Director, Woman and Child Development, Govt. of Himachal Pradesh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 66
+    },
+    "Department of WCD, Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 54,
+      "no_risk": 120
+    },
+    "CRID Mewat": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 60,
+      "no_risk": 54
+    },
+    "CRID Jind": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 23,
+      "no_risk": 58
+    },
+    "CRID Sirsa": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 12,
+      "no_risk": 34
+    },
+    "J & K Bank": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 200
+    },
+    "CRID Yamuna Nagar": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 14,
+      "no_risk": 48
+    },
+    "State Urban Development Authority, Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 81,
+      "no_risk": 82
+    },
+    "CRID Rohtak": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 23,
+      "no_risk": 82
+    },
+    "CRID Hisar": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 14,
+      "no_risk": 33
+    },
+    "CRID Bhiwani": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 13,
+      "no_risk": 73
+    },
+    "CRID Jhajjar": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 37,
+      "no_risk": 143
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer, Solan": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 7
+    },
+    "District Family and Welfare Society Panchkula": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 13
+    },
+    "CRID Sonipat": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 25,
+      "no_risk": 117
+    },
+    "CRID Palwal": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 28,
+      "no_risk": 84
+    },
+    "CRID Mahendragarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 13,
+      "no_risk": 52
+    },
+    "Health Department": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 19
+    },
+    "Department of IT, Govt. of Himachal Predesh_UCL": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 96
+    },
+    "Punjab State Child Protection Society of Department of Social Security and Women & Child Developmen": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 60,
+      "no_risk": 324
+    },
+    "State Health Society": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 29
+    },
+    "District Family & Welfare Society Mewat": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 4,
+      "no_risk": 20
+    },
+    "BSNL Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 4,
+      "no_risk": 67
+    },
+    "BSNL PB Circle": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 2,
+      "no_risk": 66
+    },
+    "CRID Kaithal": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 15,
+      "no_risk": 47
+    },
+    "Capital Small Finance Bank Ltd": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 16,
+      "no_risk": 23
+    },
+    "Women and Child Development, Chandigarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 20
+    },
+    "District Health & Family Welfare Society, Hisar": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 32
+    },
+    "CRID Ambala": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 6,
+      "no_risk": 37
+    },
+    "Director Family Welfare MCH & Immunization J&K": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 147
+    },
+    "CRID Rewari": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 11,
+      "no_risk": 30
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer Kinnaur": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 4
+    },
+    "CRID Fatehabad": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 7,
+      "no_risk": 37
+    },
+    "Ladakh e-Governance Agency": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 20,
+      "no_risk": 23
+    },
+    "BSNL HP Circle": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 6,
+      "no_risk": 42
+    },
+    "CRID Panipat": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 18,
+      "no_risk": 48
+    },
+    "CRID Kurukshetra": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 10,
+      "no_risk": 59
+    },
+    "CRID Panchkula": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 31
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer, Mandi": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 13
+    },
+    "CRID Gurgaon": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 14,
+      "no_risk": 48
+    },
+    "Department of Education, UT of Ladakh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 14,
+      "no_risk": 7
+    },
+    "District Family & Welfare Society Rewari": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 5
+    },
+    "District Family and Welfare Society Bhiwani": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 16
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer, Shimla": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 18
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer, Sirmour": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 9
+    },
+    "District Family and Welfare Society Panipat": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 7
+    },
+    "Sarva Siksha Abhiyan Society": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 48
+    },
+    "District Health & Family Welfare Society, Sonipat": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 10
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer Kangra": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 10
+    },
+    "ICDS Department, UT of Ladakh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 26
+    },
+    "BSNL J&K": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 8,
+      "no_risk": 17
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer Kullu": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 6
+    },
+    "District Family & Welfare Society Faridabad": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 8,
+      "no_risk": 21
+    },
+    "District Family and Welfare Society Rohtak": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 14
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer, Una": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 5
+    },
+    "District Family and Welfare Society Yamuna Nagar": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 1
+    },
+    "District Family & Welfare Society Palwal": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 2
+    },
+    "CRID Haryana UCL": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 4,
+      "no_risk": 0
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer Hamirpur": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 8
+    },
+    "District Health and Family Welfare Society, Jhajjar": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 3
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer Bilaspur": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 7
+    },
+    "district Health& Family Welfare Society Sirsa": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 3
+    },
+    "District Registrar Births & Deaths cum Chief Medical Officer Chamba": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 7
+    },
+    "Chinar Construction Company Prime agency": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 1
+    },
+    "COMTECHINFO SOLUTIONS PVT.LTD": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 2
+    }
+  },
+  "reg_distribution": {
+    "CRID Govt of Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 388,
+      "no_risk": 1412
+    },
+    "FCS Govt of Punjab": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1128,
+      "no_risk": 2102
+    },
+    "Govt of Himachal Pradesh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 190,
+      "no_risk": 1422
+    },
+    "Directorate of Secondary Education, Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 316,
+      "no_risk": 592
+    },
+    "State Project Director SSA J&K": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 397,
+      "no_risk": 630
+    },
+    "Labour Department Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 54,
+      "no_risk": 170
+    },
+    "State Mission Director ICDS Social Welfare Department JK": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 255,
+      "no_risk": 804
+    },
+    "State Project Director SSA RMSA HP": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 111,
+      "no_risk": 60
+    },
+    "Govt of UT of Chandigarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 68,
+      "no_risk": 97
+    },
+    "Directorate of Woman and Child Development, Government of Himachal Pradesh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 66
+    },
+    "Department of WCD, Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 54,
+      "no_risk": 120
+    },
+    "Jammu and Kashmir Bank": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 200
+    },
+    "SUDAH": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 81,
+      "no_risk": 82
+    },
+    " Chief Registrar Births & Deaths -cum-Director Health Services ": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 94
+    },
+    "Director General Health Services,Health Deptt, Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 15,
+      "no_risk": 147
+    },
+    "Secretary IT, Govt. of UT of Ladakh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 34,
+      "no_risk": 75
+    },
+    "Director Health and Family Welfare, UT": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 29
+    },
+    "BSNL Haryana": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 4,
+      "no_risk": 67
+    },
+    "BSNL PB Circle": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 2,
+      "no_risk": 66
+    },
+    "Capital Small Finance Bank Ltd": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 16,
+      "no_risk": 23
+    },
+    "Women and Child Development, Chandigarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 20
+    },
+    "Director Family Welfare MCH & Immunization J&K": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 1,
+      "no_risk": 147
+    },
+    "BSNL HP Circle": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 6,
+      "no_risk": 42
+    },
+    "Director School Education UT Chandigarh": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 48
+    },
+    "BSNL J & K CIRCLE": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 8,
+      "no_risk": 17
+    },
+    "Secretery IT,J&K": {
+      "high_risk": 0,
+      "med_risk": 0,
+      "low_risk": 0,
+      "no_risk": 3
+    }
+  },
+  "last_updated_at": "2026-02-26T13:19:16.361165"
+}

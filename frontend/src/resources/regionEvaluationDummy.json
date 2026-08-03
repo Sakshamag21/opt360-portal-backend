@@ -1,0 +1,81 @@
+{
+  "states": {
+    "data": {
+      "opt_distribution": {
+        "Karnataka":       { "high_risk": 142, "med_risk": 89,  "low_risk": 213 },
+        "Maharashtra":     { "high_risk": 98,  "med_risk": 120, "low_risk": 187 },
+        "Uttar Pradesh":   { "high_risk": 63,  "med_risk": 54,  "low_risk": 98  },
+        "Tamil Nadu":      { "high_risk": 71,  "med_risk": 83,  "low_risk": 156 },
+        "Gujarat":         { "high_risk": 44,  "med_risk": 67,  "low_risk": 178 },
+        "Rajasthan":       { "high_risk": 38,  "med_risk": 45,  "low_risk": 92  },
+        "Telangana":       { "high_risk": 55,  "med_risk": 61,  "low_risk": 134 },
+        "West Bengal":     { "high_risk": 29,  "med_risk": 38,  "low_risk": 87  },
+        "Madhya Pradesh":  { "high_risk": 34,  "med_risk": 42,  "low_risk": 79  },
+        "Jharkhand":       { "high_risk": 21,  "med_risk": 27,  "low_risk": 53  }
+      }
+    }
+  },
+  "districts": {
+    "Karnataka": {
+      "data": {
+        "opt_distribution": {
+          "Karnataka": {
+            "Bengaluru Urban":   { "high_risk": 67, "med_risk": 34, "low_risk": 89 },
+            "Mysuru":            { "high_risk": 23, "med_risk": 18, "low_risk": 45 },
+            "Mangaluru":         { "high_risk": 15, "med_risk": 21, "low_risk": 38 },
+            "Hubballi-Dharwad":  { "high_risk": 19, "med_risk": 11, "low_risk": 29 },
+            "Belagavi":          { "high_risk": 11, "med_risk": 5,  "low_risk": 12 },
+            "Shivamogga":        { "high_risk": 7,  "med_risk": 0,  "low_risk": 0  }
+          }
+        }
+      }
+    },
+    "Maharashtra": {
+      "data": {
+        "opt_distribution": {
+          "Maharashtra": {
+            "Mumbai Suburban": { "high_risk": 45, "med_risk": 62, "low_risk": 78 },
+            "Pune":            { "high_risk": 22, "med_risk": 31, "low_risk": 54 },
+            "Nagpur":          { "high_risk": 18, "med_risk": 14, "low_risk": 32 },
+            "Thane":           { "high_risk": 13, "med_risk": 13, "low_risk": 23 }
+          }
+        }
+      }
+    },
+    "Uttar Pradesh": {
+      "data": {
+        "opt_distribution": {
+          "Uttar Pradesh": {
+            "Lucknow":    { "high_risk": 22, "med_risk": 19, "low_risk": 34 },
+            "Kanpur":     { "high_risk": 18, "med_risk": 14, "low_risk": 27 },
+            "Agra":       { "high_risk": 12, "med_risk": 11, "low_risk": 21 },
+            "Varanasi":   { "high_risk": 11, "med_risk": 10, "low_risk": 16 }
+          }
+        }
+      }
+    },
+    "Tamil Nadu": {
+      "data": {
+        "opt_distribution": {
+          "Tamil Nadu": {
+            "Chennai":    { "high_risk": 31, "med_risk": 38, "low_risk": 72 },
+            "Coimbatore": { "high_risk": 18, "med_risk": 22, "low_risk": 45 },
+            "Madurai":    { "high_risk": 14, "med_risk": 16, "low_risk": 28 },
+            "Salem":      { "high_risk": 8,  "med_risk": 7,  "low_risk": 11 }
+          }
+        }
+      }
+    },
+    "Gujarat": {
+      "data": {
+        "opt_distribution": {
+          "Gujarat": {
+            "Ahmedabad": { "high_risk": 21, "med_risk": 31, "low_risk": 84 },
+            "Surat":     { "high_risk": 14, "med_risk": 22, "low_risk": 62 },
+            "Vadodara":  { "high_risk": 9,  "med_risk": 14, "low_risk": 32 }
+          }
+        }
+      }
+    }
+  }
+}

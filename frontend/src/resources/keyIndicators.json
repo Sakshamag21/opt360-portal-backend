@@ -1,0 +1,8 @@
+{
+"most_common_anomaly":{"Stale Machine Sync":45},
+"highest_risk_opt":{
+    "opt_id":"UP_UBIO_NS823888",
+    "opt_name":"Nitesh Rai",
+    "risk_score":0.95
+}
+}

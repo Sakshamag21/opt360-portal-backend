@@ -1,0 +1,27 @@
+database:
+  host: 10.10.106.159
+  port: 3306
+  username: su01
+  password: su01
+  name: operator360
+  tables:
+    feature_registry: features
+    signal_registry: signals
+    opt_registry: opt_master
+rocksdb:
+  host: 10.13.159.221
+  port: 8089
+  endpoint: /sid/batch_get
+
+rocksdb_sid_store:
+  host: 10.13.159.221
+  port: 8089
+  endpoint: /sid/batch_get
+
+rocksdb_operator_store:
+  host: 10.10.118.51
+  port: 8089
+  endpoint: /optid/get_by_date
+
+
+

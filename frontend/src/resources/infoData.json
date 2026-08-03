@@ -1,0 +1,16 @@
+{
+  "BIO_MFC_RISK":  "Number of operators who have done Manual Frauds",
+  "HARDWARE_MULTI_BIO_DEV":  "Number of Operators using multiple Biometric Devices",
+  "SUS_OPER_NAME_RISK":  "Operator which are using Multiple Names",
+  "HARDWARE_MACH_ID_CHANGE":  "Operators which have worked on machines which have been cloned",
+  "DOCUMENT_QC_GRAVE":  "QC Grave Error count for the Operator",
+  "SUS_HOF_RISK":  "Operators who are Head of Multiple Families",
+  "BIO_SFC_RISK":  "Count of number of unsystematic packets by the operator",
+  "WORK_OPT_SYNC":  "Operator who are not syncing machines but still making packets",
+  "HARDWARE_MULTI_MACH":  "Operators Using Multiple Machines",
+  "SUS_MOBILE_FRAUD":  "Operator attempting mobile change of same resident",
+  "SUS_OPT_NAME":  "Operator changing the name of same User multiple times",
+  "SUS_POB_RISK":  "Packets Marked with Approximate POB",
+  "WORK_OUT_STATE":  "Operator Making Out of State Packet",
+  "WORK_ODD_HOUR":  "Operator Making Packet out of Working Hour"
+}

@@ -1,0 +1,667 @@
+{
+    "UP_UBIO_NS823888": [
+        {
+            "pkt_eid": "29866194300005202511272215304",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T22:15:04Z",
+            "pkt_station_id": "ST001",
+            "pkt_machine_code": "MC001",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511272016428",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T20:16:28Z",
+            "pkt_station_id": "ST001",
+            "pkt_machine_code": "MC001",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261842157",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-26T18:42:17Z",
+            "pkt_station_id": "ST001",
+            "pkt_machine_code": "MC002",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261532240",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T15:32:40Z",
+            "pkt_station_id": "ST002",
+            "pkt_machine_code": "MC001",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251145633",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-25T11:45:33Z",
+            "pkt_station_id": "ST001",
+            "pkt_machine_code": "MC003",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511240928149",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-24T09:28:49Z",
+            "pkt_station_id": "ST002",
+            "pkt_machine_code": "MC002",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_UBIO_NS827027": [
+        {
+            "pkt_eid": "29866194300005202511271935422",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T19:35:22Z",
+            "pkt_station_id": "ST003",
+            "pkt_machine_code": "MC004",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511271748331",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T17:48:31Z",
+            "pkt_station_id": "ST003",
+            "pkt_machine_code": "MC004",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261624055",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-26T16:24:55Z",
+            "pkt_station_id": "ST004",
+            "pkt_machine_code": "MC005",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261307212",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-26T13:07:12Z",
+            "pkt_station_id": "ST003",
+            "pkt_machine_code": "MC004",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511250856439",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-25T08:56:39Z",
+            "pkt_station_id": "ST004",
+            "pkt_machine_code": "MC006",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_UBIO_NS893339": [
+        {
+            "pkt_eid": "29866194300005202511272128456",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T21:28:56Z",
+            "pkt_station_id": "ST005",
+            "pkt_machine_code": "MC007",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511271542178",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T15:42:18Z",
+            "pkt_station_id": "ST005",
+            "pkt_machine_code": "MC008",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261934287",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-26T19:34:27Z",
+            "pkt_station_id": "ST006",
+            "pkt_machine_code": "MC007",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261018493",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T10:18:43Z",
+            "pkt_station_id": "ST005",
+            "pkt_machine_code": "MC009",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251423566",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-25T14:23:56Z",
+            "pkt_station_id": "ST006",
+            "pkt_machine_code": "MC008",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511241157034",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-24T11:57:04Z",
+            "pkt_station_id": "ST005",
+            "pkt_machine_code": "MC007",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_UBIO_NS875288": [
+        {
+            "pkt_eid": "29866194300005202511270947215",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T09:47:15Z",
+            "pkt_station_id": "ST007",
+            "pkt_machine_code": "MC010",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261756384",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T17:56:24Z",
+            "pkt_station_id": "ST007",
+            "pkt_machine_code": "MC011",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261432157",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-26T14:32:17Z",
+            "pkt_station_id": "ST008",
+            "pkt_machine_code": "MC010",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511250923468",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-25T09:23:48Z",
+            "pkt_station_id": "ST007",
+            "pkt_machine_code": "MC012",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511241635279",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-24T16:35:29Z",
+            "pkt_station_id": "ST008",
+            "pkt_machine_code": "MC011",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_UBIO_NS812479": [
+        {
+            "pkt_eid": "29866194300005202511272047133",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T20:47:33Z",
+            "pkt_station_id": "ST009",
+            "pkt_machine_code": "MC013",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511271359244",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T13:59:44Z",
+            "pkt_station_id": "ST010",
+            "pkt_machine_code": "MC014",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261128355",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-26T11:28:55Z",
+            "pkt_station_id": "ST009",
+            "pkt_machine_code": "MC015",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511250754166",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-25T07:54:16Z",
+            "pkt_station_id": "ST010",
+            "pkt_machine_code": "MC013",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231912477",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-23T19:12:77Z",
+            "pkt_station_id": "ST009",
+            "pkt_machine_code": "MC016",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511221458088",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-22T14:58:08Z",
+            "pkt_station_id": "ST010",
+            "pkt_machine_code": "MC014",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_CSC_LKO_NS794176": [
+        {
+            "pkt_eid": "29866194300005202511271815599",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T18:15:99Z",
+            "pkt_station_id": "ST011",
+            "pkt_machine_code": "MC017",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261455700",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T14:55:00Z",
+            "pkt_station_id": "ST012",
+            "pkt_machine_code": "MC018",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251236111",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T12:36:11Z",
+            "pkt_station_id": "ST011",
+            "pkt_machine_code": "MC019",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511240847222",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-24T08:47:22Z",
+            "pkt_station_id": "ST012",
+            "pkt_machine_code": "MC017",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231543333",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-23T15:43:33Z",
+            "pkt_station_id": "ST011",
+            "pkt_machine_code": "MC020",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UPDOP_RBL_NS816285": [
+        {
+            "pkt_eid": "29866194300005202511271628444",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T16:28:44Z",
+            "pkt_station_id": "ST013",
+            "pkt_machine_code": "MC021",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261319555",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-26T13:19:55Z",
+            "pkt_station_id": "ST014",
+            "pkt_machine_code": "MC022",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251047666",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T10:47:66Z",
+            "pkt_station_id": "ST013",
+            "pkt_machine_code": "MC023",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511240736777",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-24T07:36:77Z",
+            "pkt_station_id": "ST014",
+            "pkt_machine_code": "MC021",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231427888",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-23T14:27:88Z",
+            "pkt_station_id": "ST013",
+            "pkt_machine_code": "MC024",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UPEDU_BRH_NS441009": [
+        {
+            "pkt_eid": "29866194300005202511271541999",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T15:41:99Z",
+            "pkt_station_id": "ST015",
+            "pkt_machine_code": "MC025",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261258000",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T12:58:00Z",
+            "pkt_station_id": "ST016",
+            "pkt_machine_code": "MC026",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251034111",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T10:34:11Z",
+            "pkt_station_id": "ST015",
+            "pkt_machine_code": "MC027",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511240822222",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-24T08:22:22Z",
+            "pkt_station_id": "ST016",
+            "pkt_machine_code": "MC025",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231615333",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-23T16:15:33Z",
+            "pkt_station_id": "ST015",
+            "pkt_machine_code": "MC028",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511221408444",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-22T14:08:44Z",
+            "pkt_station_id": "ST016",
+            "pkt_machine_code": "MC026",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP.DOP_ETH_NS771373": [
+        {
+            "pkt_eid": "29866194300005202511272053144",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T20:53:44Z",
+            "pkt_station_id": "ST017",
+            "pkt_machine_code": "MC029",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511271435255",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T14:35:55Z",
+            "pkt_station_id": "ST018",
+            "pkt_machine_code": "MC030",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261117366",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-26T11:17:66Z",
+            "pkt_station_id": "ST017",
+            "pkt_machine_code": "MC031",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511250859477",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-25T08:59:77Z",
+            "pkt_station_id": "ST018",
+            "pkt_machine_code": "MC029",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511241641588",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-24T16:41:88Z",
+            "pkt_station_id": "ST017",
+            "pkt_machine_code": "MC032",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_ICDS_NO070449": [
+        {
+            "pkt_eid": "29866194300005202511271823699",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T18:23:99Z",
+            "pkt_station_id": "ST019",
+            "pkt_machine_code": "MC033",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261505800",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T15:05:00Z",
+            "pkt_station_id": "ST020",
+            "pkt_machine_code": "MC034",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251247911",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T12:47:11Z",
+            "pkt_station_id": "ST019",
+            "pkt_machine_code": "MC035",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511241030022",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-24T10:30:22Z",
+            "pkt_station_id": "ST020",
+            "pkt_machine_code": "MC033",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231512133",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-23T15:12:33Z",
+            "pkt_station_id": "ST019",
+            "pkt_machine_code": "MC036",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511221354244",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-22T13:54:44Z",
+            "pkt_station_id": "ST020",
+            "pkt_machine_code": "MC034",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_BOBO_NS850027": [
+        {
+            "pkt_eid": "29866194300005202511271647355",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T16:47:55Z",
+            "pkt_station_id": "ST021",
+            "pkt_machine_code": "MC037",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261329466",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-26T13:29:66Z",
+            "pkt_station_id": "ST022",
+            "pkt_machine_code": "MC038",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251111577",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T11:11:77Z",
+            "pkt_station_id": "ST021",
+            "pkt_machine_code": "MC039",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511240853688",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-24T08:53:88Z",
+            "pkt_station_id": "ST022",
+            "pkt_machine_code": "MC037",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231635799",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-23T16:35:99Z",
+            "pkt_station_id": "ST021",
+            "pkt_machine_code": "MC040",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "SCL069041": [
+        {
+            "pkt_eid": "29866194300005202511271758900",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-27T17:58:00Z",
+            "pkt_station_id": "ST023",
+            "pkt_machine_code": "MC041",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261440011",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-26T14:40:11Z",
+            "pkt_station_id": "ST024",
+            "pkt_machine_code": "MC042",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251222122",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T12:22:22Z",
+            "pkt_station_id": "ST023",
+            "pkt_machine_code": "MC043",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511241004233",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-24T10:04:33Z",
+            "pkt_station_id": "ST024",
+            "pkt_machine_code": "MC041",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231746344",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-23T17:46:44Z",
+            "pkt_station_id": "ST023",
+            "pkt_machine_code": "MC044",
+            "pkt_source": "ECMP"
+        }
+    ],
+    "UP_UBIO_NS646165": [
+        {
+            "pkt_eid": "29866194300005202511271512455",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-27T15:12:55Z",
+            "pkt_station_id": "ST025",
+            "pkt_machine_code": "MC045",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511261254566",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-26T12:54:66Z",
+            "pkt_station_id": "ST026",
+            "pkt_machine_code": "MC046",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511251036677",
+            "pkt_type": "U",
+            "pkt_subtype": "B",
+            "pkt_created_ts": "2025-11-25T10:36:77Z",
+            "pkt_station_id": "ST025",
+            "pkt_machine_code": "MC047",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511240818788",
+            "pkt_type": "N",
+            "pkt_subtype": null,
+            "pkt_created_ts": "2025-11-24T08:18:88Z",
+            "pkt_station_id": "ST026",
+            "pkt_machine_code": "MC045",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511231600899",
+            "pkt_type": "U",
+            "pkt_subtype": "MoU",
+            "pkt_created_ts": "2025-11-23T16:00:99Z",
+            "pkt_station_id": "ST025",
+            "pkt_machine_code": "MC048",
+            "pkt_source": "ECMP"
+        },
+        {
+            "pkt_eid": "29866194300005202511221343000",
+            "pkt_type": "U",
+            "pkt_subtype": "D",
+            "pkt_created_ts": "2025-11-22T13:43:00Z",
+            "pkt_station_id": "ST026",
+            "pkt_machine_code": "MC046",
+            "pkt_source": "ECMP"
+        }
+    ]
+}

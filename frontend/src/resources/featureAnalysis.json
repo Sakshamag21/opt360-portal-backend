@@ -1,0 +1,192 @@
+[
+    {
+        "featureId": "sustxn_parallel_enrolment_score_v2",
+        "featureName": "sustxn_parallel_enrolment_score",
+        "category": "Suspicious Transactions",
+        "description": "Score based on the count of number of parallel enrolment instances by the operator over the last 30 calender days",
+        "count": 263,
+        "max": {
+            "value": null,
+            "operatorId": ""
+        },
+        "min": {
+            "value": null,
+            "operatorId": ""
+        },
+        "average": {
+            "value": null,
+            "operatorId": ""
+        }
+    },
+    {
+        "featureId": "bio_packet_face_pop_count_cumulative_v1",
+        "featureName": "bio_packet_face_pop_count_cumulative",
+        "category": "Biometrics",
+        "description": "Cumulative count of Photo on Photo verdict incidents by the operator in MFC, calculated from 23rd June",
+        "count": 2,
+        "max": {
+            "value": 1.0,
+            "operatorId": "FCS_SED_BLS_NS908500"
+        },
+        "min": {
+            "value": 1.0,
+            "operatorId": "FCS_SED_BLS_NS908500"
+        },
+        "average": {
+            "value": 1.0,
+            "operatorId": "FCS_SED_BLS_NS908500"
+        }
+    },
+    {
+        "featureId": "work_pob_declared_instances_v1",
+        "featureName": "work_pob_declared_instances",
+        "category": "Work",
+        "description": "Count of enrolments done by operator where dob staus is declared",
+        "count": 15265,
+        "max": {
+            "value": 945.0,
+            "operatorId": "RDDF_DRB_NS906651"
+        },
+        "min": {
+            "value": 945.0,
+            "operatorId": "RDDF_DRB_NS906651"
+        },
+        "average": {
+            "value": 945.0,
+            "operatorId": "RDDF_DRB_NS906651"
+        }
+    },
+    {
+        "featureId": "sustxn_outstate_pkts_zscore_v2",
+        "featureName": "sustxn_outstate_pkts_zscore",
+        "category": "Suspicious Transactions",
+        "description": "Zscore based on the number of oustate packets made by the operator over the period of last 30 calender days",
+        "count": 101227,
+        "max": {
+            "value": 37.72,
+            "operatorId": "UP_CSC_AYO_NS763580"
+        },
+        "min": {
+            "value": -0.2,
+            "operatorId": "012_NEHA_NS830932"
+        },
+        "average": {
+            "value": 0.001,
+            "operatorId": "11390128OWK_KUR"
+        }
+    },
+    {
+        "featureId": "auth_failure_ratio_score_v2",
+        "featureName": "auth_failure_ratio_score",
+        "category": "Authentication",
+        "description": "Score based on the ratio of operators failure transaction over the period of last 30 calender days",
+        "count": 187094,
+        "max": {
+            "value": 1.0,
+            "operatorId": "GJ_BOBO_NS897370"
+        },
+        "min": {
+            "value": 0.0,
+            "operatorId": "0005206713"
+        },
+        "average": {
+            "value": 0.0268,
+            "operatorId": " UCSC_WB_NS867190"
+        }
+    },
+    {
+        "featureId": "auth_oddhour_txn_score_v2",
+        "featureName": "auth_oddhour_txn_score",
+        "category": "Authentication",
+        "description": "Score based on the count of number of odd hour authentication transaction by the operator over the period of last 30 days",
+        "count": 89624,
+        "max": {
+            "value": 0.99,
+            "operatorId": "BH_CSC_UCL_NS819734"
+        },
+        "min": {
+            "value": 0.45,
+            "operatorId": "010_IND_NO177826"
+        },
+        "average": {
+            "value": 0.4943,
+            "operatorId": "010_ANU_NS737656"
+        }
+    },
+    {
+        "featureId": "sustxn_parallel_enrolment_instances_7d_v1",
+        "featureName": "sustxn_parallel_enrolment_instances",
+        "category": "Suspicious Transactions",
+        "description": "Incidents of parallel enrolment seen for an operator",
+        "count": 487,
+        "max": {
+            "value": null,
+            "operatorId": ""
+        },
+        "min": {
+            "value": null,
+            "operatorId": ""
+        },
+        "average": {
+            "value": null,
+            "operatorId": ""
+        }
+    },
+    {
+        "featureId": "risk_score_7d_v1",
+        "featureName": "risk_score",
+        "category": "Uncategorized",
+        "description": "Combined score of the opeartor based on active risk features",
+        "count": 238440,
+        "max": {
+            "value": 0.98,
+            "operatorId": "MP_0515L_IN_NS917199"
+        },
+        "min": {
+            "value": 0.0,
+            "operatorId": "0005206713"
+        },
+        "average": {
+            "value": 0.2621,
+            "operatorId": "AD_NOP_CHA3_04"
+        }
+    },
+    {
+        "featureId": "work_machine_change_instances_24h_v1",
+        "featureName": "work_machine_change_instances",
+        "category": "Work",
+        "description": "Number of machines used by the operator",
+        "count": 1991,
+        "max": {
+            "value": null,
+            "operatorId": ""
+        },
+        "min": {
+            "value": null,
+            "operatorId": ""
+        },
+        "average": {
+            "value": null,
+            "operatorId": ""
+        }
+    },
+    {
+        "featureId": "work_machine_change_zscore_v2",
+        "featureName": "work_machine_change_zscore",
+        "category": "Work",
+        "description": "Zscore based on the count of different machine operator has worked on in the last 90 calender days",
+        "count": 2444,
+        "max": {
+            "value": null,
+            "operatorId": ""
+        },
+        "min": {
+            "value": null,
+            "operatorId": ""
+        },
+        "average": {
+            "value": null,
+            "operatorId": ""
+        }
+    }
+]

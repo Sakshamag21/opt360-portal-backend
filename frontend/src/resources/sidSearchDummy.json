@@ -1,0 +1,48 @@
+{
+  "success": false,
+  "message": "SID lookups completed",
+  "requested": 2,
+  "successful": 1,
+  "results": [
+    {
+      "sid": "S132222983161020260418055209",
+      "success": true,
+      "status_code": 200,
+      "response": {
+        "success": true,
+        "message": "Operator details retrieved successfully",
+        "data": {
+          "operator": {
+            "operator": [
+              {
+                "optId": "WCDKOJ_NS776624",
+                "name": "Sahanaj Parvina Mondal",
+                "email": "",
+                "reg": "WCD Assam",
+                "regCode": "991.0",
+                "ea": "WCD Assam",
+                "eaCode": "991",
+                "pincode": "783337.0",
+                "district": "Kokrajhar",
+                "state": "Assam",
+                "ro": "Guwahati",
+                "machineCode": "LENOVOB053F1E5-F10A-21BD-6B6F-F2D672CCA9A",
+                "riskScore": 0.04
+              }
+            ],
+            "pktType": "U",
+            "id": "S132222983161020260418055209",
+            "idType": "sid"
+          }
+        }
+      }
+    },
+    {
+      "sid": "S2",
+      "success": false,
+      "status_code": 502,
+      "error": "dial tcp: connection refused",
+      "response": null
+    }
+  ]
+}

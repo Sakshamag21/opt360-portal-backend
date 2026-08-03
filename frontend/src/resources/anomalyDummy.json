@@ -1,0 +1,17 @@
+{
+  "data": {
+    "ind_001": { "anomaly_category": "Biometrics", "anomaly_name": "Fingerprint Quality Fail",    "anomaly_code": "BIO_FP_001",   "high": 89,  "medium": 45, "low": 23  },
+    "ind_002": { "anomaly_category": "Biometrics", "anomaly_name": "Iris Capture Timeout",         "anomaly_code": "BIO_IR_002",   "high": 34,  "medium": 67, "low": 41  },
+    "ind_003": { "anomaly_category": "Biometrics", "anomaly_name": "Face Photo Blur",              "anomaly_code": "BIO_FC_003",   "high": 21,  "medium": 38, "low": 55  },
+    "ind_004": { "anomaly_category": "Document",   "anomaly_name": "POI Document Mismatch",        "anomaly_code": "DOC_POI_001",  "high": 56,  "medium": 28, "low": 19  },
+    "ind_005": { "anomaly_category": "Document",   "anomaly_name": "POA Document Expired",         "anomaly_code": "DOC_POA_002",  "high": 12,  "medium": 44, "low": 71  },
+    "ind_006": { "anomaly_category": "Hardware",   "anomaly_name": "Device Firmware Mismatch",     "anomaly_code": "HW_FW_001",    "high": 29,  "medium": 18, "low": 8   },
+    "ind_007": { "anomaly_category": "Hardware",   "anomaly_name": "Scanner Calibration Drift",    "anomaly_code": "HW_SC_002",    "high": 41,  "medium": 33, "low": 15  },
+    "ind_008": { "anomaly_category": "Suspicious", "anomaly_name": "Mobile Number Change Spike",   "anomaly_code": "SUS_MOB_001",  "high": 73,  "medium": 52, "low": 17  },
+    "ind_009": { "anomaly_category": "Suspicious", "anomaly_name": "Name Change Anomaly",          "anomaly_code": "SUS_NM_002",   "high": 48,  "medium": 39, "low": 11  },
+    "ind_010": { "anomaly_category": "Suspicious", "anomaly_name": "Unusual Enrolment Hours",      "anomaly_code": "SUS_HR_003",   "high": 31,  "medium": 24, "low": 9   },
+    "ind_011": { "anomaly_category": "Work",       "anomaly_name": "Stale Machine Sync",           "anomaly_code": "WORK_SYNC_001","high": 112, "medium": 78, "low": 34  },
+    "ind_012": { "anomaly_category": "Work",       "anomaly_name": "Low Packet Volume",            "anomaly_code": "WORK_VOL_002", "high": 67,  "medium": 91, "low": 145 },
+    "ind_013": { "anomaly_category": "Work",       "anomaly_name": "Off-hours Activity",           "anomaly_code": "WORK_OHR_003", "high": 44,  "medium": 37, "low": 22  }
+  }
+}

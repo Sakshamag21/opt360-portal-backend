@@ -1,0 +1,26 @@
+{
+  "opt_id":  "CAN_ZEP_NO144953",
+  "kpis":  {
+    "Authentication Transaction Features":  [
+      
+    ],
+    "Authentication Modality Devices Changing":  [
+      
+    ],
+    "Machine Sync Features":  [
+      
+    ],
+    "Packet Metrics":  [
+      
+    ],
+    "QC Analysis":  [
+      
+    ]
+  },
+  "metadata":  {
+    "opt_ro":  "Delhi",
+    "opt_state":  "Delhi",
+    "opt_district":  "New Delhi",
+    "opt_name":  "SHAHJAD"
+  }
+}

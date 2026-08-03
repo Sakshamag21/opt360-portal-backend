@@ -1,0 +1,66 @@
+[
+  {
+    "Ro": "Bengaluru",
+    "high_risk": 3200,
+    "low_risk": 4100,
+    "med_risk": 2900,
+    "no_risk": 2600,
+    "total": 15344
+  },
+  {
+    "Ro": "Chandigarh",
+    "high_risk": 1200,
+    "low_risk": 1800,
+    "med_risk": 1400,
+    "no_risk": 900,
+    "total": 5632
+  },
+  {
+    "Ro": "Delhi",
+    "high_risk": 2200,
+    "low_risk": 3400,
+    "med_risk": 2600,
+    "no_risk": 1400,
+    "total": 10144
+  },
+  {
+    "Ro": "Guwahati",
+    "high_risk": 600,
+    "low_risk": 900,
+    "med_risk": 800,
+    "no_risk": 400,
+    "total": 2952
+  },
+  {
+    "Ro": "Hyderabad",
+    "high_risk": 2100,
+    "low_risk": 3200,
+    "med_risk": 2700,
+    "no_risk": 1200,
+    "total": 10244
+  },
+  {
+    "Ro": "Lucknow",
+    "high_risk": 3300,
+    "low_risk": 4200,
+    "med_risk": 2900,
+    "no_risk": 2600,
+    "total": 15344
+  },
+  {
+    "Ro": "Mumbai",
+    "high_risk": 3400,
+    "low_risk": 4100,
+    "med_risk": 2900,
+    "no_risk": 2600,
+    "total": 15344
+  },
+  {
+    "Ro": "Ranchi",
+    "high_risk": 3200,
+    "low_risk": 4100,
+    "med_risk": 2900,
+    "no_risk": 2600,
+    "total": 15344
+  }
+]

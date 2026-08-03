@@ -1,0 +1,77 @@
+{
+  "kpi": {
+    "opt_ro": "Bangalore",
+    "user_group": "Bangalore",
+    "most_common_anomaly_name": "Stale Machine Sync",
+    "most_common_anomaly_group": "Work",
+    "most_common_anomaly_code": "WORK_SYNC_001",
+    "high_risk_count": 142
+  },
+  "ro_risk_dist": {
+    "data": {
+      "Bangalore":  { "high_risk_count": 142, "med_risk_count": 89,  "low_risk_count": 213, "no_risk_count": 45 },
+      "Mumbai":     { "high_risk_count": 98,  "med_risk_count": 120, "low_risk_count": 187, "no_risk_count": 31 },
+      "Delhi":      { "high_risk_count": 175, "med_risk_count": 95,  "low_risk_count": 142, "no_risk_count": 22 },
+      "Lucknow":    { "high_risk_count": 63,  "med_risk_count": 54,  "low_risk_count": 98,  "no_risk_count": 18 },
+      "Hyderabad":  { "high_risk_count": 88,  "med_risk_count": 76,  "low_risk_count": 165, "no_risk_count": 27 },
+      "Ranchi":     { "high_risk_count": 41,  "med_risk_count": 38,  "low_risk_count": 72,  "no_risk_count": 14 },
+      "Guwahati":   { "high_risk_count": 29,  "med_risk_count": 31,  "low_risk_count": 56,  "no_risk_count": 11 },
+      "Chandigarh": { "high_risk_count": 55,  "med_risk_count": 62,  "low_risk_count": 110, "no_risk_count": 19 }
+    }
+  },
+  "highest_risk_opt": {
+    "data": {
+      "name": "Rajesh Kumar",
+      "id": "OPT001",
+      "risk_score": 0.91,
+      "high_opt_count": 142
+    }
+  },
+  "top10_ea": {
+    "data": {
+      "ea": {
+        "Karnataka Gramin Bank EA": { "high_risk_count": 45, "med_risk_count": 23, "low_risk_count": 67 },
+        "Maharashtra CSC EA":       { "high_risk_count": 38, "med_risk_count": 41, "low_risk_count": 52 },
+        "UP Jan Seva EA":           { "high_risk_count": 31, "med_risk_count": 28, "low_risk_count": 44 },
+        "Delhi Digital EA":         { "high_risk_count": 56, "med_risk_count": 19, "low_risk_count": 35 },
+        "Jharkhand Rural EA":       { "high_risk_count": 12, "med_risk_count": 17, "low_risk_count": 29 },
+        "Kerala Services EA":       { "high_risk_count": 18, "med_risk_count": 32, "low_risk_count": 61 },
+        "Gujarat Connect EA":       { "high_risk_count": 22, "med_risk_count": 45, "low_risk_count": 89 },
+        "Bengal Seva EA":           { "high_risk_count": 9,  "med_risk_count": 21, "low_risk_count": 47 },
+        "Telangana Digital EA":     { "high_risk_count": 14, "med_risk_count": 28, "low_risk_count": 73 },
+        "Rajasthan Grameen EA":     { "high_risk_count": 27, "med_risk_count": 33, "low_risk_count": 58 }
+      }
+    }
+  },
+  "all_eas": {
+    "eas": [
+      "Karnataka Gramin Bank EA", "Maharashtra CSC EA", "UP Jan Seva EA",
+      "Delhi Digital EA", "Jharkhand Rural EA", "Kerala Services EA",
+      "Gujarat Connect EA", "Bengal Seva EA", "Telangana Digital EA",
+      "Rajasthan Grameen EA", "Punjab Services EA", "Bihar Jan Seva EA"
+    ]
+  },
+  "top10_registrar": {
+    "data": {
+      "registrars": {
+        "State Bank of India":  { "high_risk_count": 67, "med_risk_count": 58, "low_risk_count": 123 },
+        "HDFC Bank":            { "high_risk_count": 52, "med_risk_count": 41, "low_risk_count": 76  },
+        "ICICI Bank":           { "high_risk_count": 44, "med_risk_count": 38, "low_risk_count": 92  },
+        "Canara Bank":          { "high_risk_count": 38, "med_risk_count": 29, "low_risk_count": 84  },
+        "Axis Bank":            { "high_risk_count": 31, "med_risk_count": 24, "low_risk_count": 58  },
+        "Kotak Mahindra Bank":  { "high_risk_count": 23, "med_risk_count": 19, "low_risk_count": 51  },
+        "Bank of India":        { "high_risk_count": 18, "med_risk_count": 22, "low_risk_count": 45  },
+        "Federal Bank":         { "high_risk_count": 14, "med_risk_count": 31, "low_risk_count": 67  },
+        "Andhra Bank":          { "high_risk_count": 11, "med_risk_count": 25, "low_risk_count": 63  },
+        "United Bank":          { "high_risk_count": 8,  "med_risk_count": 16, "low_risk_count": 39  }
+      }
+    }
+  },
+  "all_registrars": {
+    "registrars": [
+      "State Bank of India", "HDFC Bank", "ICICI Bank", "Canara Bank",
+      "Axis Bank", "Kotak Mahindra Bank", "Bank of India", "Federal Bank",
+      "Andhra Bank", "United Bank", "Punjab National Bank", "Bank of Baroda"
+    ]
+  }
+}

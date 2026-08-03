@@ -1,0 +1,30 @@
+{ 
+  "submitted_by": "john.doe",
+  "timestamp": "2025-12-16T10:30:00.000Z",
+  "operator_id": "OPT12345",
+  "operator_name": "Sample Operator Name",
+ 
+  "ad_id": "AD123456",
+  "feedback": {
+    "verified_fraud_operator": {
+      "verdict": true,
+      "remarks": "Multiple duplicate enrollments detected across different stations with inconsistent patterns"
+    },
+    "verified_legitimate_operator": {
+      "verdict": false,
+      "remarks": ""
+    },
+    "worked_with_cloned_machine": {
+      "verdict": true,
+      "remarks": "Hardware serial number mismatch detected in station logs"
+    },
+    "unsystematic_biometric_capture": {
+      "verdict": true,
+      "remarks": "Fingerprint quality scores consistently below threshold"
+    },
+    "packet_anomaly_identified": {
+      "verdict": true,
+      "remarks": "Packet timestamps show impossible geographic velocity between enrollments"
+    }
+  }
+}
