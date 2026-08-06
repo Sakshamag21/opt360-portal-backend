@@ -1,5 +1,106 @@
 import React from 'react';
-import { MessageSquare, FileText, CheckCircle, XCircle, Check, AlertTriangle } from 'lucide-react';
+import { MessageSquare, FileText, CheckCircle, XCircle, Check, AlertTriangle, BarChart3 } from 'lucide-react';
+
+// Mirrors backend/handlers/OperatorDetailView/operatorFeedbackStats.go's
+// feedbackCategories, plus which verdict value ("yes"/true) counts as the
+// concerning one for that category -- verified_legitimate_operator is the
+// only category where "yes" is the reassuring answer.
+const CATEGORY_META = [
+  { key: 'verified_fraud_operator', label: 'Verified Fraudulent', concerningValue: true },
+  { key: 'verified_legitimate_operator', label: 'Verified Legitimate', concerningValue: false },
+  { key: 'worked_with_cloned_machine', label: 'Cloned Machine Use', concerningValue: true },
+  { key: 'unsystematic_biometric_capture', label: 'Unsystematic Biometric Capture', concerningValue: true },
+  { key: 'packet_anomaly_identified', label: 'Packet Anomaly Identified', concerningValue: true },
+];
+
+const FeedbackStatsCard = ({ feedbackStats, loadingFeedbackStats, feedbackStatsError }) => {
+  if (loadingFeedbackStats) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100 mb-6">
+        <p className="text-sm text-gray-500">Loading feedback stats…</p>
+      </div>
+    );
+  }
+
+  if (feedbackStatsError) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100 mb-6">
+        <p className="text-sm text-red-600">Failed to load feedback stats: {feedbackStatsError}</p>
+      </div>
+    );
+  }
+
+  const totalCount = feedbackStats?.total_feedback_count ?? 0;
+  const categories = feedbackStats?.categories ?? {};
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100 mb-6">
+      <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+        <div className="p-2 bg-gradient-to-br from-[#e8dff2] to-[#d2c5e7] rounded-lg">
+          <BarChart3 className="w-6 h-6 text-[#9b7bb5]" />
+        </div>
+        Feedback Stats
+      </h3>
+      <p className="text-sm text-gray-600 mb-6">
+        Aggregated across every feedback submission on record for this operator ({totalCount} total).
+      </p>
+
+      {totalCount === 0 ? (
+        <p className="text-sm text-gray-500">No feedback has been submitted for this operator yet.</p>
+      ) : (
+        <div className="space-y-4">
+          {CATEGORY_META.map(({ key, label, concerningValue }) => {
+            const stat = categories[key] || { yes: 0, no: 0, unset: 0 };
+            const concerning = concerningValue ? stat.yes : stat.no;
+            const clear = concerningValue ? stat.no : stat.yes;
+            const unset = stat.unset;
+            const total = concerning + clear + unset || 1;
+
+            return (
+              <div key={key}>
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-sm font-semibold text-gray-800">{label}</span>
+                  <span className="text-xs text-gray-500">
+                    {concerning} concerning · {clear} clear · {unset} not evaluated
+                  </span>
+                </div>
+                <div className="w-full h-3 rounded-full overflow-hidden bg-gray-100 flex">
+                  {concerning > 0 && (
+                    <div
+                      className="h-full bg-red-500"
+                      style={{ width: `${(concerning / total) * 100}%` }}
+                      title={`${concerning} concerning`}
+                    />
+                  )}
+                  {clear > 0 && (
+                    <div
+                      className="h-full bg-green-500"
+                      style={{ width: `${(clear / total) * 100}%` }}
+                      title={`${clear} clear`}
+                    />
+                  )}
+                  {unset > 0 && (
+                    <div
+                      className="h-full bg-gray-300"
+                      style={{ width: `${(unset / total) * 100}%` }}
+                      title={`${unset} not evaluated`}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="flex gap-4 pt-2 text-xs text-gray-500">
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> Concerning</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" /> Clear</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block" /> Not evaluated</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const OperatorFeedback = ({
   feedback,
@@ -11,9 +112,18 @@ const OperatorFeedback = ({
   feedbackHistory,
   submitFeedback,
   setFeedback,
+  feedbackStats,
+  loadingFeedbackStats,
+  feedbackStatsError,
 }) => {
   return (
     <div className="space-y-6 animate-fade-in">
+      <FeedbackStatsCard
+        feedbackStats={feedbackStats}
+        loadingFeedbackStats={loadingFeedbackStats}
+        feedbackStatsError={feedbackStatsError}
+      />
+
       <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100">
         <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
           <div className="p-2 bg-gradient-to-br from-[#e8dff2] to-[#d2c5e7] rounded-lg">

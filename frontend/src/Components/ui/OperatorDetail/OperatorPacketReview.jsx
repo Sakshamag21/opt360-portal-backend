@@ -7,6 +7,8 @@ const OperatorPacketReview = ({
   packetError,
   filterDate,
   setFilterDate,
+  filterEndDate,
+  setFilterEndDate,
   searchSid,
   setSearchSid,
   filterEnrollmentType,
@@ -67,7 +69,7 @@ const OperatorPacketReview = ({
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Date</label>
+              <label className="block text-sm font-medium text-gray-700">Date From</label>
               <input
                 type="date"
                 value={filterDate}
@@ -76,9 +78,21 @@ const OperatorPacketReview = ({
                 max={new Date().toISOString().split('T')[0]}
                 className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Date To</label>
+              <input
+                type="date"
+                value={filterEndDate}
+                onChange={e => setFilterEndDate(e.target.value)}
+                min={filterDate || new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
               <p className="flex items-center gap-1 text-xs text-amber-600">
                 <Info className="w-3 h-3 shrink-0" />
-                Search is limited to the last 30 days
+                Leave blank to search a single date. Ranges are capped at 31 days.
               </p>
             </div>
 {/* 
@@ -143,7 +157,7 @@ const OperatorPacketReview = ({
             {!hideFilters && (
               <button
                 onClick={searchPackets}
-                disabled={!filterDate && !filterEnrollmentType && !filterAnomalyType}
+                disabled={!filterDate && !filterEndDate && !filterEnrollmentType && !filterAnomalyType}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

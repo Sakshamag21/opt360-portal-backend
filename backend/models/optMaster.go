@@ -78,23 +78,26 @@ type OperatorSearchRequest struct {
 
 // SearchOperator is the projection returned by /api/operator_search.
 type SearchOperator struct {
-	ID                string     `json:"id"`
-	UID               string     `json:"uid"`
-	Name              string     `json:"name"`
-	Phone             string     `json:"phone"`
-	Email             string     `json:"email"`
-	RiskScore         *float64   `json:"risk_score"`
-	RiskBucket        *string    `json:"risk_bucket"`
-	Reg               *string    `json:"reg"`
-	RegCode           *string    `json:"reg_code"`
-	EA                *string    `json:"ea"`
-	EACode            *string    `json:"ea_code"`
-	RO                *string    `json:"ro"`
-	District          *string    `json:"district"`
-	State             *string    `json:"state"`
-	LastSyncTimestamp *time.Time `json:"last_sync_timestamp"`
-	DataPath          *string    `json:"data_path"`
-	Status            *string    `json:"status"`
+	ID                 string     `json:"id"`
+	UID                string     `json:"uid"`
+	Name               string     `json:"name"`
+	Phone              string     `json:"phone"`
+	Email              string     `json:"email"`
+	RiskScore          *float64   `json:"risk_score"`
+	RiskBucket         *string    `json:"risk_bucket"`
+	Reg                *string    `json:"reg"`
+	RegCode            *string    `json:"reg_code"`
+	EA                 *string    `json:"ea"`
+	EACode             *string    `json:"ea_code"`
+	RO                 *string    `json:"ro"`
+	District           *string    `json:"district"`
+	State              *string    `json:"state"`
+	LastSyncTimestamp  *time.Time `json:"last_sync_timestamp"`
+	DataPath           *string    `json:"data_path"`
+	Status             *string    `json:"status"`
+	LastPacketDate     *time.Time `json:"last_packet_date"`
+	DissociationDate   *time.Time `json:"dissociation_date"`
+	DissociationReason *string    `json:"dissociation_reason"`
 }
 
 // OperatorSearchAppliedFilters records which filters were active in the request,

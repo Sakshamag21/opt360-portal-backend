@@ -21,15 +21,17 @@ const clickHouseQueryTimeout = 10 * time.Second
 func GetAnomalousSIDsFromClickHouse(
 	optID string,
 	anomalyCategory string,
+	featureGroup string,
 	page int,
 	pageSize int,
 ) ([]map[string]interface{}, int, error) {
 
-	log.Printf("[ClickHouse][AnomalousPackets] Request received opt_id=%s page=%d page_size=%d category=%q",
+	log.Printf("[ClickHouse][AnomalousPackets] Request received opt_id=%s page=%d page_size=%d category=%q feature_group=%q",
 		optID,
 		page,
 		pageSize,
 		anomalyCategory,
+		featureGroup,
 	)
 
 	conn, err := db.GetClickHouseDB()
@@ -50,6 +52,11 @@ func GetAnomalousSIDsFromClickHouse(
 	if anomalyCategory != "" {
 		whereClause += " AND lower(anomaly_type) = lower(?)"
 		countArgs = append(countArgs, anomalyCategory)
+	}
+
+	if featureGroup != "" {
+		whereClause += " AND lower(feature_group) = lower(?)"
+		countArgs = append(countArgs, featureGroup)
 	}
 
 	//-------------------------------------------------------

@@ -178,7 +178,7 @@ func SearchOperators(c *gin.Context) {
 		whereSQL = "WHERE " + strings.Join(whereClauses, " AND ")
 	}
 	fromSQL := "FROM operator360.opt_master"
-	selectCols := `SELECT id, uid, name, phone, email, risk_score, risk_bucket, reg, reg_code, ea, ea_code, ro, district, state, last_sync_timestamp, data_path, is_active`
+	selectCols := `SELECT id, uid, name, phone, email, risk_score, risk_bucket, reg, reg_code, ea, ea_code, ro, district, state, last_sync_timestamp, data_path, is_active, last_packet_date, dissociation_date, dissociation_reason`
 
 	// ── 7. Count ───────────────────────────────────────────────────────────────
 	var total int
@@ -212,27 +212,31 @@ func SearchOperators(c *gin.Context) {
 	for rows.Next() {
 		var op models.SearchOperator
 		var (
-			uid               sql.NullString
-			phone             sql.NullString
-			email             sql.NullString
-			riskScore         sql.NullFloat64
-			riskBucket        sql.NullString
-			reg               sql.NullString
-			regCode           sql.NullString
-			ea                sql.NullString
-			eaCode            sql.NullString
-			ro                sql.NullString
-			district          sql.NullString
-			state             sql.NullString
-			lastSyncTimestamp sql.NullTime
-			dataPath          sql.NullString
-			isActive          sql.NullInt64
+			uid                sql.NullString
+			phone              sql.NullString
+			email              sql.NullString
+			riskScore          sql.NullFloat64
+			riskBucket         sql.NullString
+			reg                sql.NullString
+			regCode            sql.NullString
+			ea                 sql.NullString
+			eaCode             sql.NullString
+			ro                 sql.NullString
+			district           sql.NullString
+			state              sql.NullString
+			lastSyncTimestamp  sql.NullTime
+			dataPath           sql.NullString
+			isActive           sql.NullInt64
+			lastPacketDate     sql.NullTime
+			dissociationDate   sql.NullTime
+			dissociationReason sql.NullString
 		)
 		if err := rows.Scan(
 			&op.ID, &uid, &op.Name, &phone, &email,
 			&riskScore, &riskBucket,
 			&reg, &regCode, &ea, &eaCode, &ro, &district, &state,
 			&lastSyncTimestamp, &dataPath, &isActive,
+			&lastPacketDate, &dissociationDate, &dissociationReason,
 		); err != nil {
 			log.Printf("[SearchOperators] Row scan error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -282,6 +286,15 @@ func SearchOperators(c *gin.Context) {
 		}
 		if dataPath.Valid {
 			op.DataPath = &dataPath.String
+		}
+		if lastPacketDate.Valid {
+			op.LastPacketDate = &lastPacketDate.Time
+		}
+		if dissociationDate.Valid {
+			op.DissociationDate = &dissociationDate.Time
+		}
+		if dissociationReason.Valid {
+			op.DissociationReason = &dissociationReason.String
 		}
 		// Normalize opt_master's raw is_active (1/other/NULL) into "active"/"inactive"
 		// so callers get a consistent value regardless of the underlying representation.

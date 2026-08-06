@@ -17,23 +17,26 @@ import (
 // equivalent — those fields are gone now, not renamed. KPI (operator_features) and
 // risk breakdown (operator_risk_details) are unaffected and remain S3-backed.
 type OperatorDetailsData struct {
-	ID                string   `json:"id"`
-	UID               string   `json:"uid"`
-	Name              string   `json:"name"`
-	Phone             string   `json:"phone"`
-	Email             string   `json:"email"`
-	RiskScore         *float64 `json:"risk_score"`
-	RiskBucket        *string  `json:"risk_bucket"`
-	Reg               *string  `json:"reg"`
-	RegCode           *string  `json:"reg_code"`
-	EA                *string  `json:"ea"`
-	EACode            *string  `json:"ea_code"`
-	RO                *string  `json:"ro"`
-	District          *string  `json:"district"`
-	State             *string  `json:"state"`
-	LastSyncTimestamp *string  `json:"last_sync_timestamp"`
-	Status            string   `json:"status"`
-	MachineCode       *string  `json:"machine_code"`
+	ID                 string   `json:"id"`
+	UID                string   `json:"uid"`
+	Name               string   `json:"name"`
+	Phone              string   `json:"phone"`
+	Email              string   `json:"email"`
+	RiskScore          *float64 `json:"risk_score"`
+	RiskBucket         *string  `json:"risk_bucket"`
+	Reg                *string  `json:"reg"`
+	RegCode            *string  `json:"reg_code"`
+	EA                 *string  `json:"ea"`
+	EACode             *string  `json:"ea_code"`
+	RO                 *string  `json:"ro"`
+	District           *string  `json:"district"`
+	State              *string  `json:"state"`
+	LastSyncTimestamp  *string  `json:"last_sync_timestamp"`
+	Status             string   `json:"status"`
+	MachineCode        *string  `json:"machine_code"`
+	LastPacketDate     *string  `json:"last_packet_date"`
+	DissociationDate   *string  `json:"dissociation_date"`
+	DissociationReason *string  `json:"dissociation_reason"`
 }
 
 // GetOperatorDetails handles GET /api/operator_details.
@@ -65,21 +68,25 @@ func GetOperatorDetails(c *gin.Context) {
 	query := `
 		SELECT id, uid, name, phone, email, risk_score, risk_bucket,
 		       reg, reg_code, ea, ea_code, ro, district, state,
-		       last_sync_timestamp, is_active, machine_code
+		       last_sync_timestamp, is_active, machine_code,
+		       last_packet_date, dissociation_date, dissociation_reason
 		FROM operator360.opt_master
 		WHERE id = ?`
 
 	var (
-		d                 OperatorDetailsData
-		riskScore         sql.NullFloat64
-		riskBucket        sql.NullString
-		reg, regCode      sql.NullString
-		ea, eaCode        sql.NullString
-		ro                sql.NullString
-		district, state   sql.NullString
-		lastSyncTimestamp sql.NullTime
-		isActive          sql.NullInt64
-		machineCode       sql.NullString
+		d                  OperatorDetailsData
+		riskScore          sql.NullFloat64
+		riskBucket         sql.NullString
+		reg, regCode       sql.NullString
+		ea, eaCode         sql.NullString
+		ro                 sql.NullString
+		district, state    sql.NullString
+		lastSyncTimestamp  sql.NullTime
+		isActive           sql.NullInt64
+		machineCode        sql.NullString
+		lastPacketDate     sql.NullTime
+		dissociationDate   sql.NullTime
+		dissociationReason sql.NullString
 	)
 
 	row := database.QueryRow(query, optID)
@@ -87,6 +94,7 @@ func GetOperatorDetails(c *gin.Context) {
 		&d.ID, &d.UID, &d.Name, &d.Phone, &d.Email, &riskScore, &riskBucket,
 		&reg, &regCode, &ea, &eaCode, &ro, &district, &state,
 		&lastSyncTimestamp, &isActive, &machineCode,
+		&lastPacketDate, &dissociationDate, &dissociationReason,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("[GetOperatorDetails] Not found opt_id=%s user=%s", optID, user.ADID)
@@ -137,6 +145,17 @@ func GetOperatorDetails(c *gin.Context) {
 	}
 	if machineCode.Valid {
 		d.MachineCode = &machineCode.String
+	}
+	if lastPacketDate.Valid {
+		formatted := lastPacketDate.Time.Format("2006-01-02T15:04:05Z07:00")
+		d.LastPacketDate = &formatted
+	}
+	if dissociationDate.Valid {
+		formatted := dissociationDate.Time.Format("2006-01-02T15:04:05Z07:00")
+		d.DissociationDate = &formatted
+	}
+	if dissociationReason.Valid {
+		d.DissociationReason = &dissociationReason.String
 	}
 
 	// opt_master.is_active is a numeric column where 1 means active and every

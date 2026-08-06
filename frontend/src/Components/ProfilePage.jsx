@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { LogOut, UserPlus, Users, Mail, Shield, Pencil, Loader } from 'lucide-react';
+import { LogOut, UserPlus, Users, Mail, Shield, Pencil, Loader, MessageSquare } from 'lucide-react';
 import PageNavigation from './PageNavigation';
 import PageWrapper from './ui/PageWrapper';
 import LoadingSpinner from './ui/LoadingSpinner';
@@ -16,6 +16,16 @@ const DEV_TEAM = [
   { ad_id: 'jdoe01', name: 'Jane Doe', email: 'jane.doe@example.com', regional_office: 'Delhi', role: 'admin', status: 'active', last_login: '2026-06-30T09:12:00Z' },
   { ad_id: 'asmith', name: 'Alex Smith', email: 'alex.smith@example.com', regional_office: 'Delhi', role: 'user', status: 'inactive', last_login: null }
 ];
+
+const DEV_FEEDBACK_STATS = {
+  total_feedback_count: 7,
+  distinct_operators_count: 5,
+  recent: [
+    { event_id: 'dev-1', timestamp: new Date(Date.now() - 1 * 86400000).toISOString(), opt_id: 'OPT2049183', operator_name: 'Ramesh Kumar Sharma' },
+    { event_id: 'dev-2', timestamp: new Date(Date.now() - 3 * 86400000).toISOString(), opt_id: 'OPT1938471', operator_name: 'Sunita Devi' },
+    { event_id: 'dev-3', timestamp: new Date(Date.now() - 9 * 86400000).toISOString(), opt_id: 'OPT2049183', operator_name: 'Ramesh Kumar Sharma' }
+  ]
+};
 
 const formatLastLogin = (value) => {
   if (!value) return 'Never';
@@ -40,6 +50,9 @@ const ProfilePage = () => {
   const [editingEmail, setEditingEmail] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailMessage, setEmailMessage] = useState(null);
+
+  const [feedbackStats, setFeedbackStats] = useState(null);
+  const [loadingFeedbackStats, setLoadingFeedbackStats] = useState(true);
 
   const [team, setTeam] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
@@ -87,6 +100,27 @@ const ProfilePage = () => {
     }
   }, []);
 
+  const fetchFeedbackStats = useCallback(async () => {
+    setLoadingFeedbackStats(true);
+    if (IS_DEV) {
+      await new Promise(r => setTimeout(r, 200));
+      setFeedbackStats(DEV_FEEDBACK_STATS);
+      setLoadingFeedbackStats(false);
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/profile/feedback_stats`, { method: 'POST', headers: getAuthHeaders() });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setFeedbackStats(data);
+    } catch (err) {
+      console.error('Error fetching feedback stats:', err);
+      setFeedbackStats(null);
+    } finally {
+      setLoadingFeedbackStats(false);
+    }
+  }, []);
+
   const fetchTeam = useCallback(async (group) => {
     setLoadingTeam(true);
     setTeamMessage(null);
@@ -115,6 +149,7 @@ const ProfilePage = () => {
   }, []);
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
+  useEffect(() => { fetchFeedbackStats(); }, [fetchFeedbackStats]);
 
   useEffect(() => {
     if (!profile) return;
@@ -253,7 +288,7 @@ const ProfilePage = () => {
           </button>
         </div>
 
-        <div className={`mt-5 grid grid-cols-1 sm:grid-cols-3 ${isGlobalUser ? 'lg:grid-cols-4' : ''} gap-4`}>
+        <div className={`mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${isGlobalUser ? 'xl:grid-cols-5' : ''} gap-4`}>
           <div className="bg-gray-50 rounded-lg p-4">
             <p className="text-xs text-gray-500 mb-1">Group</p>
             <p className="font-semibold text-gray-900">{profile.regional_office}</p>
@@ -307,6 +342,21 @@ const ProfilePage = () => {
               </div>
             )}
           </div>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><MessageSquare className="w-3 h-3" /> Feedback Given</p>
+            {loadingFeedbackStats ? (
+              <p className="font-semibold text-gray-400 flex items-center gap-1.5">
+                <Loader className="w-3.5 h-3.5 animate-spin" /> Loading...
+              </p>
+            ) : (
+              <p className="font-semibold text-gray-900">
+                {feedbackStats?.total_feedback_count ?? 0}
+                {feedbackStats?.distinct_operators_count > 0 && (
+                  <span className="text-xs font-normal text-gray-500"> &nbsp;across {feedbackStats.distinct_operators_count} operator{feedbackStats.distinct_operators_count === 1 ? '' : 's'}</span>
+                )}
+              </p>
+            )}
+          </div>
         </div>
         {emailMessage && (
           <p className={`mt-3 text-sm ${emailMessage.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
@@ -314,6 +364,35 @@ const ProfilePage = () => {
           </p>
         )}
       </div>
+
+      {/* Recent Feedback Activity */}
+      {!loadingFeedbackStats && feedbackStats?.recent?.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+            <MessageSquare className="w-5 h-5 text-purple-500" /> Recent Feedback Activity
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b">
+                  <th className="py-2 pr-4">Operator</th>
+                  <th className="py-2 pr-4">Opt ID</th>
+                  <th className="py-2 pr-4">Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {feedbackStats.recent.map(item => (
+                  <tr key={item.event_id} className="border-b last:border-0">
+                    <td className="py-2 pr-4 font-medium text-gray-900">{item.operator_name || '—'}</td>
+                    <td className="py-2 pr-4 text-gray-600">{item.opt_id}</td>
+                    <td className="py-2 pr-4 text-gray-600">{formatLastLogin(item.timestamp)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* My Team */}
       <div className="bg-white rounded-xl shadow-md p-6">

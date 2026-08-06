@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MapPin, Mail, Phone, TrendingUp, Clock, AlertCircle, Zap } from 'lucide-react';
+import { User, MapPin, Mail, Phone, TrendingUp, Clock, AlertCircle, Zap, UserX, Package } from 'lucide-react';
 import { getRiskBucketStyle } from '../../../utils/colorHelpers';
 
 const OperatorDetailsSection = ({ apiOperatorData, loadingApiData }) => {
@@ -28,9 +28,16 @@ const OperatorDetailsSection = ({ apiOperatorData, loadingApiData }) => {
               </div>
               <div className="flex justify-between items-center p-3 bg-white rounded-lg hover:bg-indigo-50 transition">
                 <span className="text-gray-600 font-medium">Status</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${apiOperatorData.status === 'active' ? 'bg-green-100 text-green-700 border-2 border-green-300' : 'bg-red-100 text-red-700 border-2 border-red-300'}`}>
-                  {apiOperatorData.status === 'active' ? '● Active' : '● Inactive'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {apiOperatorData.dissociation_date && (
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border-2 border-red-300">
+                      ● Dissociated
+                    </span>
+                  )}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${apiOperatorData.status === 'active' ? 'bg-green-100 text-green-700 border-2 border-green-300' : 'bg-red-100 text-red-700 border-2 border-red-300'}`}>
+                    {apiOperatorData.status === 'active' ? '● Active' : '● Inactive'}
+                  </span>
+                </div>
               </div>
               <div className="flex justify-between items-start p-3 bg-white rounded-lg hover:bg-indigo-50 transition">
                 <div className="flex items-center gap-2 text-gray-600">
@@ -57,6 +64,15 @@ const OperatorDetailsSection = ({ apiOperatorData, loadingApiData }) => {
                 </div>
                 <span className="font-bold text-gray-900 text-sm text-right">
                   {apiOperatorData.last_sync_timestamp ? new Date(apiOperatorData.last_sync_timestamp).toLocaleString() : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-start p-3 bg-white rounded-lg hover:bg-indigo-50 transition">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Package className="w-4 h-4" />
+                  <span className="font-medium">Last Packet Date</span>
+                </div>
+                <span className="font-bold text-gray-900 text-sm text-right">
+                  {apiOperatorData.last_packet_date ? new Date(apiOperatorData.last_packet_date).toLocaleString() : 'N/A'}
                 </span>
               </div>
             </div>
@@ -132,6 +148,32 @@ const OperatorDetailsSection = ({ apiOperatorData, loadingApiData }) => {
                   <span className="text-gray-600 font-medium">Machine Code</span>
                   <span className="font-bold text-gray-900 font-mono text-xs text-right max-w-[65%] break-all">
                     {apiOperatorData.machine_code}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dissociation Card */}
+          {apiOperatorData.dissociation_date && (
+            <div className="bg-gradient-to-br from-red-50 to-white rounded-2xl p-6 shadow-xl border-2 border-red-200 hover:shadow-2xl transition-all duration-300">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 border-b border-red-200 pb-4">
+                <div className="p-2 bg-red-500 rounded-lg">
+                  <UserX className="w-5 h-5 text-white" />
+                </div>
+                Dissociation
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg hover:bg-red-50 transition">
+                  <span className="text-gray-600 font-medium">Dissociation Date</span>
+                  <span className="font-bold text-red-700 text-right">
+                    {new Date(apiOperatorData.dissociation_date).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-start p-3 bg-white rounded-lg hover:bg-red-50 transition">
+                  <span className="text-gray-600 font-medium">Reason</span>
+                  <span className="font-bold text-gray-900 text-sm text-right max-w-[60%] break-words">
+                    {apiOperatorData.dissociation_reason || 'Not specified'}
                   </span>
                 </div>
               </div>

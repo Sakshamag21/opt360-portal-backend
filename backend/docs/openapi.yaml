@@ -1090,6 +1090,46 @@ paths:
           content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
         "500": { $ref: "#/components/responses/ServerError" }
 
+  /operator_feedback_stats:
+    get:
+      summary: Get an operator's feedback submission history and per-category stats
+      description: |
+        Reads every /feedback (see the /feedback POST endpoint) submission for
+        this opt_id back out of ClickHouse, where a Kafka Engine + materialized
+        view flattens each feedback_submitted event into one row. Returns
+        yes/no/unset counts per verdict category plus the full submission
+        history, for the operator profile page's feedback stats card.
+      operationId: GetOperatorFeedbackStats
+      parameters:
+        - $ref: "#/components/parameters/OptId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  opt_id: { type: string }
+                  total_feedback_count: { type: integer }
+                  categories:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        yes: { type: integer }
+                        no: { type: integer }
+                        unset: { type: integer }
+                  latest: { type: object, nullable: true, additionalProperties: true }
+                  history:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+        "400":
+          description: opt_id missing
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
   /operator_status:
     post:
       summary: Get an operator's UID-DB status by user_code

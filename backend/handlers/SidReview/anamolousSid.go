@@ -47,8 +47,9 @@ func GetAnamolousSIDs(c *gin.Context) {
 
 	optID := c.Query("opt_id") // e.g., "MH_WMIT_SN_NS046496"
 
-	// Get optional filter parameter
+	// Get optional filter parameters
 	anomalyCategoryFilter := c.Query("anomaly_category") // e.g., "work", "hardware", "suspicious", "document", "biometrics" (optional)
+	featureGroupFilter := c.Query("feature_group")       // distinct values come from GET /api/anomaly_groups (optional)
 
 	if optID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -61,16 +62,18 @@ func GetAnamolousSIDs(c *gin.Context) {
 	// Try ClickHouse first
 	// ------------------------------------------------------------------
 	log.Printf(
-		"[GetAnamolousSIDs] Looking up anomalous packets in ClickHouse (opt_id=%s, page=%d, page_size=%d, category=%q)",
+		"[GetAnamolousSIDs] Looking up anomalous packets in ClickHouse (opt_id=%s, page=%d, page_size=%d, category=%q, feature_group=%q)",
 		optID,
 		page,
 		pageSize,
 		anomalyCategoryFilter,
+		featureGroupFilter,
 	)
 
 	records, totalRecords, err := GetAnomalousSIDsFromClickHouse(
 		optID,
 		anomalyCategoryFilter,
+		featureGroupFilter,
 		page,
 		pageSize,
 	)
@@ -101,6 +104,7 @@ func GetAnamolousSIDs(c *gin.Context) {
 			"file": "clickhouse",
 
 			"anomaly_category_filter": anomalyCategoryFilter,
+			"feature_group_filter":    featureGroupFilter,
 
 			"pagination": gin.H{
 				"page":          page,
@@ -224,6 +228,19 @@ func GetAnamolousSIDs(c *gin.Context) {
 		}
 	}
 
+	// Apply feature_group filter if provided. Older anomaly_sid.json files may
+	// not carry a feature_group per SID at all -- records missing it just
+	// never match rather than erroring, same tolerance as the category filter.
+	if featureGroupFilter != "" {
+		next := make([]map[string]interface{}, 0, len(filteredData))
+		for _, record := range filteredData {
+			if fg, ok := record["feature_group"].(string); ok && strings.EqualFold(fg, featureGroupFilter) {
+				next = append(next, record)
+			}
+		}
+		filteredData = next
+	}
+
 	// Calculate pagination
 	totalRecords = len(filteredData)
 	totalPages := (totalRecords + pageSize - 1) / pageSize
@@ -253,6 +270,7 @@ func GetAnamolousSIDs(c *gin.Context) {
 		"operator_id":             optID,
 		"file":                    fileName,
 		"anomaly_category_filter": anomalyCategoryFilter,
+		"feature_group_filter":    featureGroupFilter,
 		"pagination": gin.H{
 			"page":          page,
 			"page_size":     pageSize,

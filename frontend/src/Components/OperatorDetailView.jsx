@@ -91,6 +91,11 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
 
   // Feedback history state
   const [feedbackHistory, setFeedbackHistory] = useState([]);
+
+  // Feedback stats (ClickHouse-backed aggregate across every past submission)
+  const [feedbackStats, setFeedbackStats] = useState(null);
+  const [loadingFeedbackStats, setLoadingFeedbackStats] = useState(true);
+  const [feedbackStatsError, setFeedbackStatsError] = useState(null);
   
   // Packet review data state
   const [packetData, setPacketData] = useState([]);
@@ -107,6 +112,9 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
   
   // Packet filter states
   const [filterDate, setFilterDate] = useState('');
+  // When set (and different from filterDate), searchPackets sends
+  // start_date/end_date instead of a single date — see fetchPacketsWithFilters.
+  const [filterEndDate, setFilterEndDate] = useState('');
   const [filterEnrollmentType, setFilterEnrollmentType] = useState('');
   const [filterPacketSource, setFilterPacketSource] = useState('');
   const [filterAnomalyType, setFilterAnomalyType] = useState('');
@@ -126,6 +134,9 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
   const [anomalousCurrentPage, setAnomalousCurrentPage] = useState(1);
   const [anomalousPageSize, setAnomalousPageSize] = useState(50);
   const [anomalousTotalRecords, setAnomalousTotalRecords] = useState(0);
+  const [anomalyGroupOptions, setAnomalyGroupOptions] = useState([]);
+  const [loadingAnomalyGroups, setLoadingAnomalyGroups] = useState(false);
+  const [filterAnomalyGroup, setFilterAnomalyGroup] = useState('');
 
   useEffect(() => {
     setTimeout(() => setIsLoaded(true), 50);
@@ -134,6 +145,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     loadOperatorRiskDetails();
     loadOperatorFeatures();
     loadFeedbackHistory();
+    loadFeedbackStats();
   }, []);
 
   // Load operator details from API
@@ -271,6 +283,40 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     }
   };
 
+  // Load feedback stats + full submission history from ClickHouse (every
+  // feedback ever submitted for this operator, not just what's cached in
+  // this browser's localStorage).
+  const loadFeedbackStats = async () => {
+    try {
+      setLoadingFeedbackStats(true);
+      setFeedbackStatsError(null);
+
+      const params = new URLSearchParams({
+        opt_id: operator.opt_id || operator.Opt_id || ''
+      });
+
+      const url = `${API_BASE_URL}/api/operator_feedback_stats?${params.toString()}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const statsData = await response.json();
+      setFeedbackStats(statsData);
+    } catch (err) {
+      console.error('Error loading feedback stats:', err);
+      setFeedbackStatsError(err.message);
+      setFeedbackStats(null);
+    } finally {
+      setLoadingFeedbackStats(false);
+    }
+  };
+
   // Load packet data from API
   const loadPacketData = async () => {
     try {
@@ -357,6 +403,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
       setPacketError(null);
 
       const date           = 'date'           in filters ? filters.date           : filterDate;
+      const endDate        = 'endDate'        in filters ? filters.endDate        : filterEndDate;
       const sid            = 'sid'            in filters ? filters.sid            : searchSid;
       const enrollType     = 'enrollType'     in filters ? filters.enrollType     : filterEnrollmentType;
       const pktSource      = 'pktSource'      in filters ? filters.pktSource      : filterPacketSource;
@@ -370,7 +417,15 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
         page:         page.toString(),
         page_size:    size.toString(),
       });
-      if (date)        params.append('date',            date);
+      // A real range (end date given and different from start) sends
+      // start_date/end_date; otherwise stick to the single 'date' param so
+      // single-day searches keep hitting the backend's fast single-date path.
+      if (endDate && endDate !== date) {
+        params.append('start_date', date);
+        params.append('end_date',   endDate);
+      } else if (date) {
+        params.append('date', date);
+      }
       if (sid)         params.append('sid',             sid);
       if (enrollType)  params.append('enrollment_type', enrollType);
       if (pktSource)   params.append('pkt_source',      pktSource.replace(/ /g, '_'));
@@ -430,6 +485,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     yesterday.setDate(yesterday.getDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
     setFilterDate(dateStr);
+    setFilterEndDate('');
     setFilterEnrollmentType('');
     setFilterPacketSource('');
     setFilterAnomalyType('');
@@ -450,6 +506,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
       
       // Clear other filters
       setFilterDate('');
+      setFilterEndDate('');
       setFilterEnrollmentType('');
       setFilterPacketSource('');
       setFilterAnomalyType('');
@@ -540,9 +597,10 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     }
   };
 
-  // Load all anomalous packets for the operator (no anomaly_category filter — i.e. every category)
-  // for the "Anomalous Packets" tab, which replaces the old Anomalies tab.
-  const loadAnomalousPackets = async (page = 1, size = anomalousPageSize) => {
+  // Load anomalous packets for the operator (no anomaly_category filter — i.e.
+  // every category) for the "Anomalous Packets" tab, which replaces the old
+  // Anomalies tab. Optionally scoped by feature_group via filterAnomalyGroup.
+  const loadAnomalousPackets = async (page = 1, size = anomalousPageSize, group = filterAnomalyGroup) => {
     try {
       setLoadingAnomalousPackets(true);
       setAnomalousPacketsError(null);
@@ -555,6 +613,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
         page: page.toString(),
         page_size: size.toString()
       });
+      if (group) params.append('feature_group', group);
 
       const url = `${API_BASE_URL}/api/anamolous_sids?${params.toString()}`;
 
@@ -610,6 +669,33 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
   const handleAnomalousPageChange = (newPage) => loadAnomalousPackets(newPage, anomalousPageSize);
   const handleAnomalousPageSizeChange = (newSize) => loadAnomalousPackets(1, newSize);
   const anomalousTotalPages = Math.max(1, Math.ceil(anomalousTotalRecords / anomalousPageSize));
+
+  // Load the distinct feature_group values behind this operator's anomalous
+  // packets, to populate the Anomalous Packets tab's group filter dropdown.
+  const loadAnomalyGroups = async () => {
+    try {
+      setLoadingAnomalyGroups(true);
+      const params = new URLSearchParams({
+        opt_id: mergedOperator.opt_id || mergedOperator.Opt_id || ''
+      });
+      const url = `${API_BASE_URL}/api/anomaly_groups?${params.toString()}`;
+      const response = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setAnomalyGroupOptions(data.anomaly_groups || []);
+    } catch (err) {
+      console.error('Error loading anomaly groups:', err);
+      setAnomalyGroupOptions([]);
+    } finally {
+      setLoadingAnomalyGroups(false);
+    }
+  };
+
+  // Anomaly group filter changed — reset to page 1 and refetch with the new group
+  const handleAnomalyGroupChange = (group) => {
+    setFilterAnomalyGroup(group);
+    loadAnomalousPackets(1, anomalousPageSize, group);
+  };
 
   // Pagination handlers — preserve all current filters, just change page/size
   const handlePageChange = (newPage) => fetchPacketsWithFilters(newPage, pageSize);
@@ -812,8 +898,9 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
         packetAnomaly: null
       });
       
-      // Reload feedback history
+      // Reload feedback history + stats
       loadFeedbackHistory();
+      loadFeedbackStats();
     } catch (error) {
       console.error('Error submitting feedback:', error);
       alert('Error submitting feedback. Please try again.');
@@ -1065,6 +1152,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
                     }
                     if (tab.id === 'anomalousPackets' && anomalousPacketsData.length === 0) {
                       loadAnomalousPackets(1, anomalousPageSize);
+                      loadAnomalyGroups();
                     }
                   }}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 ${
@@ -1134,7 +1222,27 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
           {/* Anomalous Packets Section — replaces the Anomalies tab.
               Calls /api/anamolous_sids with no anomaly_category (i.e. every category)
               and renders it with the same structure as Packet Review, minus the
-              Mark Anomaly action. */}
+              Mark Anomaly action. Its own group filter (feature_group, via
+              /api/anomaly_groups) is rendered here rather than inside
+              OperatorPacketReview, since that component's built-in filter bar
+              is date/sid-oriented and used by the unrelated Packet Review tab. */}
+          {activeSection === 'anomalousPackets' && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 border border-blue-100 shadow-sm flex items-center gap-4 flex-wrap">
+              <label className="text-sm font-medium text-gray-700">Anomaly Group:</label>
+              <select
+                value={filterAnomalyGroup}
+                onChange={(e) => handleAnomalyGroupChange(e.target.value)}
+                disabled={loadingAnomalyGroups}
+                className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 min-w-[220px]"
+              >
+                <option value="">All Groups</option>
+                {anomalyGroupOptions.map(group => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+              {loadingAnomalyGroups && <span className="text-xs text-gray-500">Loading groups...</span>}
+            </div>
+          )}
           {activeSection === 'anomalousPackets' && (
             <OperatorPacketReview
               packetData={anomalousPacketsData}
@@ -1173,6 +1281,8 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
               packetError={packetError}
               filterDate={filterDate}
               setFilterDate={setFilterDate}
+              filterEndDate={filterEndDate}
+              setFilterEndDate={setFilterEndDate}
               searchSid={searchSid}
               setSearchSid={setSearchSid}
               filterEnrollmentType={filterEnrollmentType}
@@ -1214,6 +1324,9 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
               feedbackHistory={feedbackHistory}
               submitFeedback={submitFeedback}
               setFeedback={setFeedback}
+              feedbackStats={feedbackStats}
+              loadingFeedbackStats={loadingFeedbackStats}
+              feedbackStatsError={feedbackStatsError}
             />
           )}
         </div>

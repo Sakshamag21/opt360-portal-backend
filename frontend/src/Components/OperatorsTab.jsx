@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { MapPin, AlertTriangle, Eye, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
+import { MapPin, AlertTriangle, Eye, ArrowUp, ArrowDown, Loader2, UserX } from 'lucide-react';
 import OperatorDetailView from './OperatorDetailView';
 import NameCodeTypeahead from './ui/NameCodeTypeahead';
 import { OperatorListSkeleton } from './ui/OperatorCardSkeleton';
@@ -243,23 +243,23 @@ const OperatorsTab = ({
   const toggleSortDir = () => setDraft(d => ({ ...d, sortDir: d.sortDir === 'asc' ? 'desc' : 'asc' }));
 
   const processedOperators = useMemo(() => {
+    const formatIST = (value) => {
+      if (!value) return 'N/A';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+    };
     return operators.map(op => {
-      let lastSync = 'N/A';
-      if (op.last_sync_timestamp) {
-        const date = new Date(op.last_sync_timestamp);
-        if (!Number.isNaN(date.getTime())) {
-          lastSync = date.toLocaleString('en-IN', {
-            timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-          });
-        }
-      }
       return {
         ...op,
         opt_id: op.id,
         opt_name: op.name,
         risk_score: parseFloat(op.risk_score || 0),
-        last_sync_time: lastSync,
+        last_sync_time: formatIST(op.last_sync_timestamp),
+        last_packet_date_display: formatIST(op.last_packet_date),
         opt_ro: op.ro,
         registrar_name: op.reg,
         ea_name: op.ea,
@@ -476,6 +476,11 @@ const OperatorsTab = ({
                       }`}>
                         Status: {operator.status_label}
                       </span>
+                      {operator.dissociation_date && (
+                        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                          <UserX className="w-3.5 h-3.5" /> Dissociated
+                        </span>
+                      )}
                       <button
                         onClick={() => setDetailedViewOperator(operator)}
                         className="ml-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition flex items-center gap-2 shadow-md"
@@ -490,6 +495,17 @@ const OperatorsTab = ({
                       <div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-yellow-400" /><span className="font-semibold">Registrar:</span> <span>{operator.registrar_name}</span></div>
                       <div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-green-400" /><span className="font-semibold">EA Name:</span> <span>{operator.ea_name}</span></div>
                       <div className="flex items-center gap-2"><span className="font-semibold">Last Sync:</span> <span>{operator.last_sync_time}</span></div>
+                      <div className="flex items-center gap-2"><span className="font-semibold">Last Packet Date:</span> <span>{operator.last_packet_date_display}</span></div>
+                      {operator.dissociation_date && (
+                        <div className="flex items-center gap-2 col-span-2 md:col-span-4">
+                          <UserX className="w-5 h-5 text-red-500" />
+                          <span className="font-semibold text-red-700">Dissociated:</span>
+                          <span className="text-red-700">{new Date(operator.dissociation_date).toLocaleDateString()}</span>
+                          {operator.dissociation_reason && (
+                            <span className="text-gray-500 italic">— {operator.dissociation_reason}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
