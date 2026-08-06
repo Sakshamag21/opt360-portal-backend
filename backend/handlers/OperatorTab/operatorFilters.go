@@ -111,13 +111,33 @@ func GetOperatorFilters(c *gin.Context) {
 		}
 	}
 
-	log.Printf("[GetOperatorFilters] ro=%q reg_code=%q → %d registrars, %d eas, %d risk buckets", ro, regCode, len(registrars), len(eas), len(riskBuckets))
+	// States aren't cached like risk buckets (no read-heavy path relies on
+	// them elsewhere) -- always a small live DISTINCT query, optionally
+	// scoped to ro same as risk buckets.
+	database, err := db.GetDB()
+	if err != nil {
+		log.Printf("[GetOperatorFilters] DB connection error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Database connection unavailable",
+			"details": err.Error(),
+		})
+		return
+	}
+	states, err := fetchDistinctColumn(database, "state", ro)
+	if err != nil {
+		log.Printf("[GetOperatorFilters] state query error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch states", "details": err.Error()})
+		return
+	}
+
+	log.Printf("[GetOperatorFilters] ro=%q reg_code=%q → %d registrars, %d eas, %d risk buckets, %d states", ro, regCode, len(registrars), len(eas), len(riskBuckets), len(states))
 
 	c.JSON(http.StatusOK, models.OperatorFiltersResponse{
 		RegionalOffices: regionalOffices,
 		Registrars:      registrars,
 		EAs:             eas,
 		RiskBuckets:     riskBuckets,
+		States:          states,
 	})
 }
 

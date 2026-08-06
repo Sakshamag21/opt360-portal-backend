@@ -151,4 +151,5 @@ type OperatorFiltersResponse struct {
 	Registrars      []NameCode `json:"registrars"`
 	EAs             []NameCode `json:"eas"`
 	RiskBuckets     []string   `json:"risk_buckets"`
+	States          []string   `json:"states"`
 }
