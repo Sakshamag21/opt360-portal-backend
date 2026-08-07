@@ -69,7 +69,7 @@ func GetOperatorDetails(c *gin.Context) {
 		SELECT id, uid, name, phone, email, risk_score, risk_bucket,
 		       reg, reg_code, ea, ea_code, ro, district, state,
 		       last_sync_timestamp, is_active, machine_code,
-		       last_packet_date, dissociation_date, dissociation_reason
+		       last_packet_timestamp as last_packet_date, dissociation_date, dissociation_reason_code as dissociation_reason
 		FROM operator360.opt_master
 		WHERE id = ?`
 

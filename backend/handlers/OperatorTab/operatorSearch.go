@@ -178,7 +178,7 @@ func SearchOperators(c *gin.Context) {
 		whereSQL = "WHERE " + strings.Join(whereClauses, " AND ")
 	}
 	fromSQL := "FROM operator360.opt_master"
-	selectCols := `SELECT id, uid, name, phone, email, risk_score, risk_bucket, reg, reg_code, ea, ea_code, ro, district, state, last_sync_timestamp, data_path, is_active, last_packet_date, dissociation_date, dissociation_reason`
+	selectCols := `SELECT id, uid, name, phone, email, risk_score, risk_bucket, reg, reg_code, ea, ea_code, ro, district, state, last_sync_timestamp, data_path, is_active,last_packet_timestamp as last_packet_date, dissociation_date, dissociation_reason_code as dissociation_reason`
 
 	// ── 7. Count ───────────────────────────────────────────────────────────────
 	var total int

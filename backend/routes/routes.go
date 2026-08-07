@@ -7,6 +7,7 @@ import (
 	"opt360-portal-backend/handlers/Anomaly"
 	"opt360-portal-backend/handlers/Feedback"
 	"opt360-portal-backend/handlers/LandingPage"
+	"opt360-portal-backend/handlers/Maps"
 	"opt360-portal-backend/handlers/OperatorDetailView"
 	"opt360-portal-backend/handlers/OperatorTab"
 	"opt360-portal-backend/handlers/Profile"
@@ -68,6 +69,9 @@ func SetupRoutes(router *gin.Engine) {
 		api.POST("/team", Team.GetTeam)
 		api.POST("/team/onboard", Team.OnboardUser)
 		api.POST("/team/update", Team.UpdateUser)
+
+		api.GET("/state_wise_count", Maps.GetStateWiseCount)
+		api.GET("/operators", Maps.GetOperatorMapData)
 
 	}
 }

@@ -13,6 +13,8 @@ const TABS = [
   { key: 'featureanalysis',  label: 'Feature Analysis',       path: '/featureanalysis' },
   { key: 'viewoperators',    label: 'View Operators',         path: '/viewoperators' },
   { key: 'search',           label: 'Search Packet Details',  path: '/searchpacketdetails' },
+  { key: 'dynamicriskmap',   label: 'Dynamic Risk Map',       path: '/dynamicriskmap' }, // New tab added
+
   // Profile is reachable via the header button (top-right), not a tab — see below.
 ];
 
@@ -24,6 +26,8 @@ const BORDER_COLORS = {
   viewoperators:   'border-red-500',
   search:          'border-green-500',
   profile:         'border-blue-500',
+  dynamicriskmap:  'border-teal-500', 
+
 };
 
 const PAGE_LABELS = {
@@ -34,6 +38,8 @@ const PAGE_LABELS = {
   viewoperators:   'View Operators',
   profile:         'Profile',
   search:          'Search Packet Details',
+  dynamicriskmap:  'Dynamic Risk Map', 
+
 };
 
 const PageNavigation = ({ currentPage }) => {

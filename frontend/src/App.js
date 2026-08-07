@@ -10,6 +10,7 @@ import ViewOperatorsPage from './Components/ViewOperatorsPage';
 import SearchPacketDetailsPage from './Components/SearchPacketDetailsPage';
 import FeatureAnalysisPage from './Components/FeatureAnalysisPage';
 import ProfilePage from './Components/ProfilePage';
+import DynamicRiskMap from './Components/DynamicRiskMap';
 
 function App() {
   return (
@@ -80,6 +81,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/dynamicriskmap"
+              element={
+                <ProtectedRoute>
+                  <DynamicRiskMap />
+                </ProtectedRoute>
+              }
+            />
+
 
             {/* Redirect unknown routes to landing page */}
             <Route path="*" element={<Navigate to="/" replace />} />
