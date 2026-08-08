@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, getAuthHeaders } from '../config/apiConfig';
 import { REGIONAL_OFFICES } from '../constants';
 import NameCodeTypeahead from './ui/NameCodeTypeahead';
+import PageNavigation from './PageNavigation';
+import PageWrapper from './ui/PageWrapper';
 
 const RISK_COLORS = {
   h: { fill: "#E24B4A", border: "#A32D2D", label: "High Risk" },
@@ -538,7 +540,9 @@ export default function DynamicRiskMap() {
   const zoneLabel = zoomLevel < ZOOM_DISTRICTS ? "State view — click a bubble to zoom into a state" : zoomLevel <= ZOOM_OPERATORS ? "Operator pins shown — zoom in further for ID labels" : "Operator view — individual operators shown · click any pin for details";
 
   return (
-    <div style={{ fontFamily: "sans-serif", padding: "16px 20px", maxWidth: "100%", boxSizing: "border-box" }}>
+    <PageWrapper>
+      <PageNavigation currentPage="dynamicriskmap" />
+      <div style={{ fontFamily: "sans-serif", padding: "16px 20px", maxWidth: "100%", boxSizing: "border-box" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, gap: 8, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: 19, fontWeight: 700, color: "#1a1a1a" }}>India Operator Risk Map</div>
@@ -701,6 +705,7 @@ export default function DynamicRiskMap() {
           );
         })}
       </div>
-    </div>
+      </div>
+    </PageWrapper>
   );
 }
