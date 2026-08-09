@@ -47,8 +47,10 @@ const (
 //     axis-order rules, so it can't silently mis-match the way ST_Contains
 //     can, while still using the spatial index. ro/risk_bucket/reg_code/ea_code
 //     narrow the result the same way they do on /api/operator_search and
-//     /api/state_wise_count. ro is resolved through models.ResolveRO exactly
-//     like every other RO-scoped handler.
+//     /api/state_wise_count — except ro, which (unlike operator_search) is
+//     read as the raw param with no default-to-caller's-own-RO fallback: an
+//     empty ro means literally all ROs here, for every user, not just global
+//     (TechCentre/HeadQuarters) ones.
 //
 // Lat/lon are read back with ST_Latitude/ST_Longitude, which sidesteps the
 // same axis-order ambiguity on the way out.
@@ -58,7 +60,7 @@ const (
 // fetched instead of the full nationwide operator set.
 //
 // GET /operators?id=
-// GET /operators?min_lat=&max_lat=&min_lng=&max_lng=&limit=&ro=&risk_bucket=&reg_code=&ea_code=
+// GET /operators?min_lat=&max_lat=&min_lng=&max_lng=&limit=&ro=&risk_bucket=&reg_code=&ea_code=&status=
 // Response:
 //
 //	{
@@ -70,8 +72,7 @@ func GetOperatorMapData(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found in context"})
 		return
 	}
-	user, ok := userInterface.(*models.User)
-	if !ok {
+	if _, ok := userInterface.(*models.User); !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user from context"})
 		return
 	}
@@ -149,7 +150,10 @@ func GetOperatorMapData(c *gin.Context) {
 		`
 		args = []interface{}{envelopeWKT}
 
-		filterRO := models.ResolveRO(strings.TrimSpace(c.Query("ro")), user)
+		// Raw param, not models.ResolveRO — the map's "All Regional Offices"
+		// option means literally all ROs for every user, not just global
+		// users (see the matching comment in GetStateWiseCount).
+		filterRO := strings.TrimSpace(c.Query("ro"))
 		if filterRO != "" {
 			query += " AND m.ro = ?"
 			args = append(args, filterRO)
@@ -165,6 +169,14 @@ func GetOperatorMapData(c *gin.Context) {
 		if filterEACode := strings.TrimSpace(c.Query("ea_code")); filterEACode != "" {
 			query += " AND m.ea_code = ?"
 			args = append(args, filterEACode)
+		}
+		filterStatus := strings.ToLower(strings.TrimSpace(c.Query("status")))
+		if filterStatus == "active" {
+			// is_active is numeric — 1 means active, anything else
+			// (including NULL) means inactive. Same rule as SearchOperators.
+			query += " AND m.is_active = 1"
+		} else if filterStatus == "inactive" {
+			query += " AND (m.is_active IS NULL OR m.is_active <> 1)"
 		}
 
 		query += " LIMIT ?"

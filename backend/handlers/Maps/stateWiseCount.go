@@ -13,22 +13,24 @@ import (
 
 // StateWiseCountRow represents a single row in the state-wise count response
 type StateWiseCountRow struct {
-	State string `json:"state"`
-	High  int    `json:"h"`
-	Med   int    `json:"m"`
-	Low   int    `json:"l"`
-	Total int    `json:"total"`
+	State    string `json:"state"`
+	Critical int    `json:"c"`
+	High     int    `json:"h"`
+	Med      int    `json:"m"`
+	Low      int    `json:"l"`
+	Total    int    `json:"total"`
 }
 
 // StateWiseCountResponse is the top-level response for the state-wise count endpoint
 type StateWiseCountResponse struct {
-	Data         []StateWiseCountRow `json:"data"`
-	RequestedBy  string              `json:"requested_by"`
-	TotalStates  int                 `json:"total_states"`
-	TotalHigh    int                 `json:"total_high"`
-	TotalMedium  int                 `json:"total_medium"`
-	TotalLow     int                 `json:"total_low"`
-	TotalOverall int                 `json:"total_overall"`
+	Data          []StateWiseCountRow `json:"data"`
+	RequestedBy   string              `json:"requested_by"`
+	TotalStates   int                 `json:"total_states"`
+	TotalCritical int                 `json:"total_critical"`
+	TotalHigh     int                 `json:"total_high"`
+	TotalMedium   int                 `json:"total_medium"`
+	TotalLow      int                 `json:"total_low"`
+	TotalOverall  int                 `json:"total_overall"`
 }
 
 // GetStateWiseCount returns the state-wise risk bucket counts from data_platform.opt_master
@@ -46,10 +48,18 @@ func GetStateWiseCount(c *gin.Context) {
 		return
 	}
 
-	filterRO := models.ResolveRO(strings.TrimSpace(c.Query("ro")), user)
+	// Unlike operator_search's default-to-caller's-own-RO behavior (right for
+	// a worklist), the map's "All Regional Offices" option is meant to mean
+	// literally all ROs for every user, not just global (TechCentre/
+	// HeadQuarters) users — so this reads the raw param directly instead of
+	// going through models.ResolveRO. An explicit RO is still honored the
+	// same as any other RO-scoped handler; only the no-selection default
+	// differs.
+	filterRO := strings.TrimSpace(c.Query("ro"))
 	filterRiskBucket := strings.TrimSpace(c.Query("risk_bucket"))
 	filterRegCode := strings.TrimSpace(c.Query("reg_code"))
 	filterEACode := strings.TrimSpace(c.Query("ea_code"))
+	filterStatus := strings.ToLower(strings.TrimSpace(c.Query("status")))
 
 	// Get DB connection
 	database, err := db.GetDB()
@@ -64,16 +74,17 @@ func GetStateWiseCount(c *gin.Context) {
 
 	// Base query for state-wise risk bucket counts
 	query := `
-		SELECT 
+		SELECT
 			state,
+			SUM(CASE WHEN risk_bucket = 'Critical' THEN 1 ELSE 0 END) AS c,
 			SUM(CASE WHEN risk_bucket = 'High' THEN 1 ELSE 0 END) AS h,
 			SUM(CASE WHEN risk_bucket = 'Medium' THEN 1 ELSE 0 END) AS m,
 			SUM(CASE WHEN risk_bucket = 'Low' THEN 1 ELSE 0 END) AS l,
 			COUNT(*) AS total
-		FROM 
+		FROM
 			operator360.opt_master
-		WHERE 
-			state IS NOT NULL 
+		WHERE
+			state IS NOT NULL
 			AND state != ''
 	`
 
@@ -95,6 +106,13 @@ func GetStateWiseCount(c *gin.Context) {
 	if filterEACode != "" {
 		query += " AND ea_code = ?"
 		args = append(args, filterEACode)
+	}
+	if filterStatus == "active" {
+		// is_active is numeric — 1 means active, anything else (including
+		// NULL) means inactive. Same rule as SearchOperators.
+		query += " AND is_active = 1"
+	} else if filterStatus == "inactive" {
+		query += " AND (is_active IS NULL OR is_active <> 1)"
 	}
 
 	query += `
@@ -118,11 +136,11 @@ func GetStateWiseCount(c *gin.Context) {
 
 	// Prepare response data
 	var data []StateWiseCountRow
-	var totalHigh, totalMedium, totalLow, totalOverall int
+	var totalCritical, totalHigh, totalMedium, totalLow, totalOverall int
 
 	for rows.Next() {
 		var row StateWiseCountRow
-		if err := rows.Scan(&row.State, &row.High, &row.Med, &row.Low, &row.Total); err != nil {
+		if err := rows.Scan(&row.State, &row.Critical, &row.High, &row.Med, &row.Low, &row.Total); err != nil {
 			log.Printf("[GetStateWiseCount] Row scan error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error":   "Failed to process state-wise count record",
@@ -132,6 +150,7 @@ func GetStateWiseCount(c *gin.Context) {
 		}
 
 		data = append(data, row)
+		totalCritical += row.Critical
 		totalHigh += row.High
 		totalMedium += row.Med
 		totalLow += row.Low
@@ -155,17 +174,18 @@ func GetStateWiseCount(c *gin.Context) {
 
 	// Build the final response
 	response := StateWiseCountResponse{
-		Data:         data,
-		RequestedBy:  user.ADID,
-		TotalStates:  len(data),
-		TotalHigh:    totalHigh,
-		TotalMedium:  totalMedium,
-		TotalLow:     totalLow,
-		TotalOverall: totalOverall,
+		Data:          data,
+		RequestedBy:   user.ADID,
+		TotalStates:   len(data),
+		TotalCritical: totalCritical,
+		TotalHigh:     totalHigh,
+		TotalMedium:   totalMedium,
+		TotalLow:      totalLow,
+		TotalOverall:  totalOverall,
 	}
 
-	log.Printf("[GetStateWiseCount] Returning %d states (Total: %d, High: %d, Med: %d, Low: %d) for user %s (RO: %q risk_bucket: %q reg_code: %q ea_code: %q)",
-		len(data), totalOverall, totalHigh, totalMedium, totalLow, user.ADID, filterRO, filterRiskBucket, filterRegCode, filterEACode)
+	log.Printf("[GetStateWiseCount] Returning %d states (Total: %d, Critical: %d, High: %d, Med: %d, Low: %d) for user %s (RO: %q risk_bucket: %q reg_code: %q ea_code: %q status: %q)",
+		len(data), totalOverall, totalCritical, totalHigh, totalMedium, totalLow, user.ADID, filterRO, filterRiskBucket, filterRegCode, filterEACode, filterStatus)
 
 	// Return the JSON response
 	c.JSON(http.StatusOK, response)

@@ -9,6 +9,7 @@ import PageNavigation from './PageNavigation';
 import PageWrapper from './ui/PageWrapper';
 
 const RISK_COLORS = {
+  c: { fill: "#8B1A1A", border: "#4A0D0D", label: "Critical Risk" },
   h: { fill: "#E24B4A", border: "#A32D2D", label: "High Risk" },
   m: { fill: "#EF9F27", border: "#854F0B", label: "Medium Risk" },
   l: { fill: "#1D9E75", border: "#0F6E56", label: "Low Risk" },
@@ -87,7 +88,7 @@ function operatorLimitForZoom(zoom) {
   return 800;
 }
 
-const DEFAULT_MAP_FILTERS = { ro: '', riskBucket: '', regCode: '', eaCode: '' };
+const DEFAULT_MAP_FILTERS = { ro: '', riskBucket: '', regCode: '', eaCode: '', status: '' };
 
 export default function DynamicRiskMap() {
   const navigate = useNavigate();
@@ -163,6 +164,7 @@ export default function DynamicRiskMap() {
         if (filters.riskBucket) params.set('risk_bucket', filters.riskBucket);
         if (filters.regCode) params.set('reg_code', filters.regCode);
         if (filters.eaCode) params.set('ea_code', filters.eaCode);
+        if (filters.status) params.set('status', filters.status);
         const qs = params.toString();
         const resp = await fetch(`${API_BASE_URL}/api/state_wise_count${qs ? `?${qs}` : ''}`, {
           method: 'GET',
@@ -180,6 +182,7 @@ export default function DynamicRiskMap() {
             return {
               name,
               centroid: STATE_CENTROIDS[name],
+              critical: s.c ?? s.critical ?? 0,
               high:   s.h   ?? s.high   ?? 0,
               medium: s.m   ?? s.medium ?? 0,
               low:    s.l   ?? s.low    ?? 0,
@@ -213,6 +216,17 @@ export default function DynamicRiskMap() {
   const OPERATOR_CACHE_MAX_ENTRIES = 30;
   const OPERATOR_CACHE_TTL_MS = 3 * 60 * 1000; // underlying risk data can change; don't cache forever
 
+  // Set right before a "locate operator" jump. setView() fires the same
+  // zoomend/moveend the map's own pan/zoom handler listens on, which would
+  // otherwise immediately overwrite the single located pin with every
+  // operator in that viewport. Consumed (cleared) by the very next settle
+  // event so it only suppresses that one programmatic jump — the user's own
+  // next pan/zoom resumes normal viewport fetching. The timeout is a safety
+  // net in case setView never fires a settle event at all (e.g. the target
+  // view is a no-op because the pin was already on screen).
+  const suppressNextViewportFetchRef = useRef(false);
+  const suppressNextViewportFetchTimerRef = useRef(null);
+
   const fetchOperatorsForViewport = async (map, zoom) => {
     const bounds = map.getBounds().pad(0.25);
     const requestId = ++operatorsRequestIdRef.current;
@@ -245,6 +259,7 @@ export default function DynamicRiskMap() {
       if (activeFilters.riskBucket) params.set('risk_bucket', activeFilters.riskBucket);
       if (activeFilters.regCode) params.set('reg_code', activeFilters.regCode);
       if (activeFilters.eaCode) params.set('ea_code', activeFilters.eaCode);
+      if (activeFilters.status) params.set('status', activeFilters.status);
       const resp = await fetch(`${API_BASE_URL}/api/operators?${params}`, {
         method: 'GET',
         headers: getAuthHeaders(),
@@ -296,6 +311,7 @@ export default function DynamicRiskMap() {
   }, [filters]);
 
   const totals = useMemo(() => ({
+    critical: stateData.reduce((a, s) => a + s.critical, 0),
     high:   stateData.reduce((a, s) => a + s.high,   0),
     medium: stateData.reduce((a, s) => a + s.medium, 0),
     low:    stateData.reduce((a, s) => a + s.low,    0),
@@ -350,6 +366,11 @@ export default function DynamicRiskMap() {
           renderTimerRef.current = setTimeout(() => {
             const zoom = Math.round(map.getZoom());
             setZoomLevel(zoom);
+            if (suppressNextViewportFetchRef.current) {
+              suppressNextViewportFetchRef.current = false;
+              clearTimeout(suppressNextViewportFetchTimerRef.current);
+              return; // keep showing just the located pin
+            }
             if (zoom >= ZOOM_DISTRICTS) {
               fetchOperatorsForViewport(map, zoom);
             } else {
@@ -387,6 +408,7 @@ export default function DynamicRiskMap() {
           <div data-state="${state.name}" style="background:white;border:1.5px solid #aaa;border-radius:10px;padding:5px 8px;font-family:sans-serif;font-size:10px;font-weight:600;color:#222;box-shadow:0 2px 10px rgba(0,0,0,0.14);white-space:nowrap;cursor:pointer;text-align:center;min-width:80px;">
             <div style="font-size:9px;color:#666;margin-bottom:3px;">${short}</div>
             <div style="display:flex;gap:3px;justify-content:center;">
+              <span style="background:#EAD3D3;color:#4A0D0D;border-radius:3px;padding:1px 5px;">${state.critical}C</span>
               <span style="background:#FCEBEB;color:#A32D2D;border-radius:3px;padding:1px 5px;">${state.high}H</span>
               <span style="background:#FAEEDA;color:#854F0B;border-radius:3px;padding:1px 5px;">${state.medium}M</span>
               <span style="background:#E1F5EE;color:#0F6E56;border-radius:3px;padding:1px 5px;">${state.low}L</span>
@@ -499,9 +521,12 @@ export default function DynamicRiskMap() {
   // Operator ID is a single specific operator, not a category filter —
   // rather than narrowing whatever's currently on screen (which would show
   // nothing unless you already happened to be looking at the right area),
-  // look up its coordinates directly and jump the map there. The subsequent
-  // zoomend/moveend this triggers re-fetches that viewport through the
-  // normal path, honoring whatever ro/risk_bucket/reg/ea filters are active.
+  // look up its coordinates directly and jump the map there. Only that one
+  // pin should stay shown — suppressNextViewportFetchRef stops the
+  // setView-triggered zoomend/moveend from immediately re-fetching (and
+  // overwriting it with) every operator in that viewport. The user's own
+  // next pan/zoom resumes normal viewport fetching, honoring whatever
+  // ro/risk_bucket/reg/ea filters are active.
   const handleLocateOperator = async () => {
     const id = searchId.trim();
     if (!id) return;
@@ -522,8 +547,17 @@ export default function DynamicRiskMap() {
       }
       const [lat, lng] = list[0];
       setSelectedState(null);
-      setOperators(list); // show this pin immediately, ahead of the viewport re-fetch
+      operatorsRequestIdRef.current++; // invalidate any in-flight viewport fetch
+      setOperators(list); // show only this pin
       if (leafletMapRef.current) {
+        suppressNextViewportFetchRef.current = true;
+        clearTimeout(suppressNextViewportFetchTimerRef.current);
+        // Safety net: if setView is a no-op (pin already on screen at the
+        // right zoom), zoomend/moveend may never fire, leaving the flag
+        // stuck — clear it after a beat regardless.
+        suppressNextViewportFetchTimerRef.current = setTimeout(() => {
+          suppressNextViewportFetchRef.current = false;
+        }, 1500);
         leafletMapRef.current.setView([lat, lng], ZOOM_OPERATORS + 1, { animate: true });
       }
     } catch (err) {
@@ -533,9 +567,9 @@ export default function DynamicRiskMap() {
     }
   };
 
-  const hasActiveMapFilters = !!(filters.ro || filters.riskBucket || filters.regCode || filters.eaCode);
+  const hasActiveMapFilters = !!(filters.ro || filters.riskBucket || filters.regCode || filters.eaCode || filters.status);
 
-  const display = selectedState ? { high: selectedState.high, medium: selectedState.medium, low: selectedState.low, total: selectedState.total } : totals;
+  const display = selectedState ? { critical: selectedState.critical, high: selectedState.high, medium: selectedState.medium, low: selectedState.low, total: selectedState.total } : totals;
 
   const zoneLabel = zoomLevel < ZOOM_DISTRICTS ? "State view — click a bubble to zoom into a state" : zoomLevel <= ZOOM_OPERATORS ? "Operator pins shown — zoom in further for ID labels" : "Operator view — individual operators shown · click any pin for details";
 
@@ -577,6 +611,19 @@ export default function DynamicRiskMap() {
             >
               <option value="">All Risk Categories</option>
               {filterOptions.risk_buckets.map(rb => <option key={rb} value={rb}>{rb}</option>)}
+            </select>
+          </div>
+
+          <div style={{ minWidth: 120 }}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#555", marginBottom: 4 }}>Status</label>
+            <select
+              value={draft.status}
+              onChange={e => setDraft(d => ({ ...d, status: e.target.value }))}
+              style={{ width: "100%", fontSize: 12, padding: "7px 8px", border: "1px solid #ccc", borderRadius: 8, background: "#fff", color: "#222" }}
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
 
@@ -644,8 +691,9 @@ export default function DynamicRiskMap() {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
         {[
+          { label: "Critical Risk", key: "critical", color: "#4A0D0D", bg: "#EAD3D3" },
           { label: "High Risk", key: "high", color: "#A32D2D", bg: "#FCEBEB" },
           { label: "Medium Risk", key: "medium", color: "#854F0B", bg: "#FAEEDA" },
           { label: "Low Risk", key: "low", color: "#0F6E56", bg: "#E1F5EE" },
@@ -696,6 +744,7 @@ export default function DynamicRiskMap() {
             <div key={state.name} onClick={() => handleStateClick(state)} style={{ background: active ? "#EBF3FC" : "#fafafa", border: active ? "2px solid #378ADD" : "1px solid #e5e5e5", borderRadius: 8, padding: "8px 10px", cursor: "pointer", transition: "border-color .15s, background .15s" }} onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = "#bbb"; }} onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = "#e5e5e5"; }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: active ? "#185FA5" : "#222", marginBottom: 5 }}>{state.name}</div>
               <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <span style={{ background: "#EAD3D3", color: "#4A0D0D", borderRadius: 3, padding: "1px 6px", fontSize: 10, fontWeight: 600 }}>{state.critical.toLocaleString()}C</span>
                 <span style={{ background: "#FCEBEB", color: "#A32D2D", borderRadius: 3, padding: "1px 6px", fontSize: 10, fontWeight: 600 }}>{state.high.toLocaleString()}H</span>
                 <span style={{ background: "#FAEEDA", color: "#854F0B", borderRadius: 3, padding: "1px 6px", fontSize: 10, fontWeight: 600 }}>{state.medium.toLocaleString()}M</span>
                 <span style={{ background: "#E1F5EE", color: "#0F6E56", borderRadius: 3, padding: "1px 6px", fontSize: 10, fontWeight: 600 }}>{state.low.toLocaleString()}L</span>
