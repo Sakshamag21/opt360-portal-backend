@@ -25,7 +25,8 @@ const DEV_FILTERS = {
   registrars: [...new Map(DEV_OPERATORS.map(op => [op.reg_code, { name: op.reg, code: op.reg_code }])).values()],
   eas: [...new Map(DEV_OPERATORS.map(op => [op.ea_code, { name: op.ea, code: op.ea_code }])).values()],
   risk_buckets: ['Critical', 'High', 'Medium', 'Low', 'No'],
-  states: [...new Set(DEV_OPERATORS.map(op => op.state))].filter(Boolean).sort()
+  states: [...new Set(DEV_OPERATORS.map(op => op.state))].filter(Boolean).sort(),
+  districts: [...new Set(DEV_OPERATORS.map(op => op.district))].filter(Boolean).sort()
 };
 
 const SORT_OPTIONS = [
@@ -36,6 +37,7 @@ const SORT_OPTIONS = [
 const defaultFilters = {
   ro: '',
   state: '',
+  district: '',
   regCode: '',
   eaCode: '',
   status: '',
@@ -77,7 +79,7 @@ const OperatorsTab = ({
   // `filters` (the state actually fetched with) only updates on Apply/pagination.
   const [draft, setDraft] = useState(() => ({ ...defaultFilters, ...initialFilters }));
 
-  const [filterOptions, setFilterOptions] = useState({ regional_offices: REGIONAL_OFFICES, registrars: [], eas: [], risk_buckets: [], states: [] });
+  const [filterOptions, setFilterOptions] = useState({ regional_offices: REGIONAL_OFFICES, registrars: [], eas: [], risk_buckets: [], states: [], districts: [] });
   const hasInitialData = useRef(false);
 
   // ── Filter dropdown data (registrar/EA typeahead lists, risk buckets) ──────
@@ -107,7 +109,8 @@ const OperatorsTab = ({
           registrars: data.registrars || [],
           eas: data.eas || [],
           risk_buckets: data.risk_buckets || [],
-          states: data.states || []
+          states: data.states || [],
+          districts: data.districts || []
         }));
       } catch (err) {
         console.error('Error fetching operator filter options:', err);
@@ -128,6 +131,7 @@ const OperatorsTab = ({
         if (id && !op.id.toLowerCase().includes(id.toLowerCase()) && !op.name.toLowerCase().includes(id.toLowerCase())) return false;
         if (activeFilters.ro && op.ro !== activeFilters.ro) return false;
         if (activeFilters.state && op.state !== activeFilters.state) return false;
+        if (activeFilters.district && op.district !== activeFilters.district) return false;
         if (activeFilters.regCode && op.reg_code !== activeFilters.regCode) return false;
         if (activeFilters.eaCode && op.ea_code !== activeFilters.eaCode) return false;
         if (activeFilters.status && op.status !== activeFilters.status) return false;
@@ -162,6 +166,7 @@ const OperatorsTab = ({
       // from the header's global RO picker). See operatorSearch.go.
       if (activeFilters.ro && !id) body.ro = activeFilters.ro;
       if (activeFilters.state) body.state = activeFilters.state;
+      if (activeFilters.district) body.district = activeFilters.district;
       if (activeFilters.regCode) body.reg_code = activeFilters.regCode;
       if (activeFilters.eaCode) body.ea_code = activeFilters.eaCode;
       if (activeFilters.status) body.status = activeFilters.status;
@@ -291,7 +296,7 @@ const OperatorsTab = ({
     );
   }
 
-  const hasActiveFilters = !!(searchId || filters.ro || filters.state || filters.regCode || filters.eaCode || filters.status || filters.riskBucket);
+  const hasActiveFilters = !!(searchId || filters.ro || filters.state || filters.district || filters.regCode || filters.eaCode || filters.status || filters.riskBucket);
   const isRefetching = loading && processedOperators.length > 0;
   const isFirstLoad = loading && processedOperators.length === 0;
 
@@ -389,6 +394,18 @@ const OperatorsTab = ({
               >
                 <option value="">All States</option>
                 {filterOptions.states.map(state => <option key={state} value={state}>{state}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">District</label>
+              <select
+                value={draft.district}
+                onChange={e => setDraft(d => ({ ...d, district: e.target.value }))}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Districts</option>
+                {filterOptions.districts.map(district => <option key={district} value={district}>{district}</option>)}
               </select>
             </div>
 

@@ -130,7 +130,16 @@ func GetOperatorFilters(c *gin.Context) {
 		return
 	}
 
-	log.Printf("[GetOperatorFilters] ro=%q reg_code=%q → %d registrars, %d eas, %d risk buckets, %d states", ro, regCode, len(registrars), len(eas), len(riskBuckets), len(states))
+	// Districts aren't cached either — same live DISTINCT query as states,
+	// scoped to ro the same way.
+	districts, err := fetchDistinctColumn(database, "district", ro)
+	if err != nil {
+		log.Printf("[GetOperatorFilters] district query error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch districts", "details": err.Error()})
+		return
+	}
+
+	log.Printf("[GetOperatorFilters] ro=%q reg_code=%q → %d registrars, %d eas, %d risk buckets, %d states, %d districts", ro, regCode, len(registrars), len(eas), len(riskBuckets), len(states), len(districts))
 
 	c.JSON(http.StatusOK, models.OperatorFiltersResponse{
 		RegionalOffices: regionalOffices,
@@ -138,6 +147,7 @@ func GetOperatorFilters(c *gin.Context) {
 		EAs:             eas,
 		RiskBuckets:     riskBuckets,
 		States:          states,
+		Districts:       districts,
 	})
 }
 
