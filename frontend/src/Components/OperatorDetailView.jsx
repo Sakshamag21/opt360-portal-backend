@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Mail, User, Building, Calendar, TrendingUp, AlertTriangle, CheckCircle, Activity, Clock, Zap, ArrowLeft, Shield, Award, Target, MessageSquare, Check, XCircle, FileText, Phone, Info, AlertCircle } from 'lucide-react';
+import { X, MapPin, Mail, User, Building, Calendar, TrendingUp, AlertTriangle, CheckCircle, Activity, Clock, Zap, ArrowLeft, Shield, Award, Target, MessageSquare, Check, XCircle, FileText, Phone, Info, AlertCircle, Download } from 'lucide-react';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
+import * as XLSX from 'xlsx';
 import FeatureGraph from './FeatureGraph';
 
 import sampleUser from '../resources/sampleUser.json';
@@ -137,6 +138,7 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
   const [anomalyGroupOptions, setAnomalyGroupOptions] = useState([]);
   const [loadingAnomalyGroups, setLoadingAnomalyGroups] = useState(false);
   const [filterAnomalyGroup, setFilterAnomalyGroup] = useState('');
+  const [downloadingAnomalousPackets, setDownloadingAnomalousPackets] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setIsLoaded(true), 50);
@@ -697,6 +699,83 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     loadAnomalousPackets(1, anomalousPageSize, group);
   };
 
+  // Download every anomalous packet for this operator (respecting the current
+  // feature_group filter, ignoring on-screen pagination) as an .xlsx file.
+  // /api/anamolous_sids caps page_size at 1000, so pages are walked until all
+  // totalRecords are collected rather than relying on a single request.
+  const downloadAnomalousPacketsExcel = async () => {
+    const optId = mergedOperator.opt_id || mergedOperator.Opt_id || '';
+    if (!optId) return;
+
+    try {
+      setDownloadingAnomalousPackets(true);
+
+      const fetchPage = async (page, size) => {
+        const params = new URLSearchParams({
+          opt_id: optId,
+          page: page.toString(),
+          page_size: size.toString()
+        });
+        if (filterAnomalyGroup) params.append('feature_group', filterAnomalyGroup);
+
+        const response = await fetch(`${API_BASE_URL}/api/anamolous_sids?${params.toString()}`, {
+          method: 'GET',
+          headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status} ${response.statusText}`);
+        return response.json();
+      };
+
+      const pageSizeForExport = 1000;
+      const first = await fetchPage(1, pageSizeForExport);
+      let allPackets = first.data || [];
+      const totalRecords = first.pagination?.total_records ?? allPackets.length;
+      const totalPagesForExport = Math.ceil(totalRecords / pageSizeForExport);
+
+      for (let page = 2; page <= totalPagesForExport; page++) {
+        const next = await fetchPage(page, pageSizeForExport);
+        allPackets = allPackets.concat(next.data || []);
+      }
+
+      if (allPackets.length === 0) {
+        alert('No anomalous packets to export.');
+        return;
+      }
+
+      const rows = allPackets.map(packet => {
+        const anomalyType = buildAnomalyType(packet);
+        const anomalyLabels = Array.isArray(anomalyType)
+          ? anomalyType.map(a => (typeof a === 'object' ? (a.anomaly_category || a.anomaly_name) : a)).join(', ')
+          : '';
+        return {
+          'Packet EID': packet.sid || packet.eid || packet.Eid || packet.pkt_eid || '',
+          'Type': (packet.enrolment_type || packet.enrollment_type || packet.pkt_type) === 'N' ? 'New Enrollment' : 'Update',
+          'Created Date': packet.date_created || packet.Date_created || packet.created_date || packet.date || '',
+          'Station ID': packet.station_no || packet.Station_no || packet.station_id || '',
+          'Machine Code': packet.station_machine_code || packet.Station_machine_code || packet.machine_code || '',
+          'Anomaly Category': packet.anomaly_category || packet.Anomaly_category || '',
+          'Anomaly Type': anomalyLabels,
+          'Feature Group': packet.feature_group || packet.Feature_group || '',
+          'Comments': packet.comments || packet.Comments || ''
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Anomalous Packets');
+
+      const groupSuffix = filterAnomalyGroup ? `_${filterAnomalyGroup}` : '';
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `anomalous_packets_${optId}${groupSuffix}_${dateStr}.xlsx`);
+    } catch (err) {
+      console.error('Error downloading anomalous packets:', err);
+      alert('Failed to download anomalous packets. Please try again.');
+    } finally {
+      setDownloadingAnomalousPackets(false);
+    }
+  };
+  
+
   // Pagination handlers — preserve all current filters, just change page/size
   const handlePageChange = (newPage) => fetchPacketsWithFilters(newPage, pageSize);
 
@@ -1227,20 +1306,30 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
               OperatorPacketReview, since that component's built-in filter bar
               is date/sid-oriented and used by the unrelated Packet Review tab. */}
           {activeSection === 'anomalousPackets' && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 border border-blue-100 shadow-sm flex items-center gap-4 flex-wrap">
-              <label className="text-sm font-medium text-gray-700">Anomaly Group:</label>
-              <select
-                value={filterAnomalyGroup}
-                onChange={(e) => handleAnomalyGroupChange(e.target.value)}
-                disabled={loadingAnomalyGroups}
-                className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 min-w-[220px]"
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 border border-blue-100 shadow-sm flex items-center gap-4 flex-wrap justify-between">
+              <div className="flex items-center gap-4 flex-wrap">
+                <label className="text-sm font-medium text-gray-700">Anomaly Group:</label>
+                <select
+                  value={filterAnomalyGroup}
+                  onChange={(e) => handleAnomalyGroupChange(e.target.value)}
+                  disabled={loadingAnomalyGroups}
+                  className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 min-w-[220px]"
+                >
+                  <option value="">All Groups</option>
+                  {anomalyGroupOptions.map(group => (
+                    <option key={group} value={group}>{group}</option>
+                  ))}
+                </select>
+                {loadingAnomalyGroups && <span className="text-xs text-gray-500">Loading groups...</span>}
+              </div>
+              <button
+                onClick={downloadAnomalousPacketsExcel}
+                disabled={downloadingAnomalousPackets || anomalousTotalRecords === 0}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2"
               >
-                <option value="">All Groups</option>
-                {anomalyGroupOptions.map(group => (
-                  <option key={group} value={group}>{group}</option>
-                ))}
-              </select>
-              {loadingAnomalyGroups && <span className="text-xs text-gray-500">Loading groups...</span>}
+                <Download className="w-4 h-4" />
+                {downloadingAnomalousPackets ? 'Preparing...' : 'Download Excel'}
+              </button>
             </div>
           )}
           {activeSection === 'anomalousPackets' && (
