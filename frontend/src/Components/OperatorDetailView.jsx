@@ -699,10 +699,11 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     loadAnomalousPackets(1, anomalousPageSize, group);
   };
 
-  // Download every anomalous packet for this operator (respecting the current
+  // Download the anomalous packets for this operator (respecting the current
   // feature_group filter, ignoring on-screen pagination) as an .xlsx file.
-  // /api/anamolous_sids caps page_size at 1000, so pages are walked until all
-  // totalRecords are collected rather than relying on a single request.
+  // Capped at ANOMALOUS_EXPORT_CAP EIDs (most recent first, per the API's
+  // created_date DESC ordering) so the export stays a single request.
+  const ANOMALOUS_EXPORT_CAP = 100;
   const downloadAnomalousPacketsExcel = async () => {
     const optId = mergedOperator.opt_id || mergedOperator.Opt_id || '';
     if (!optId) return;
@@ -710,32 +711,22 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
     try {
       setDownloadingAnomalousPackets(true);
 
-      const fetchPage = async (page, size) => {
-        const params = new URLSearchParams({
-          opt_id: optId,
-          page: page.toString(),
-          page_size: size.toString()
-        });
-        if (filterAnomalyGroup) params.append('feature_group', filterAnomalyGroup);
+      const params = new URLSearchParams({
+        opt_id: optId,
+        page: '1',
+        page_size: ANOMALOUS_EXPORT_CAP.toString()
+      });
+      if (filterAnomalyGroup) params.append('feature_group', filterAnomalyGroup);
 
-        const response = await fetch(`${API_BASE_URL}/api/anamolous_sids?${params.toString()}`, {
-          method: 'GET',
-          headers: getAuthHeaders()
-        });
-        if (!response.ok) throw new Error(`API error: ${response.status} ${response.statusText}`);
-        return response.json();
-      };
+      const response = await fetch(`${API_BASE_URL}/api/anamolous_sids?${params.toString()}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status} ${response.statusText}`);
+      const responseData = await response.json();
 
-      const pageSizeForExport = 1000;
-      const first = await fetchPage(1, pageSizeForExport);
-      let allPackets = first.data || [];
-      const totalRecords = first.pagination?.total_records ?? allPackets.length;
-      const totalPagesForExport = Math.ceil(totalRecords / pageSizeForExport);
-
-      for (let page = 2; page <= totalPagesForExport; page++) {
-        const next = await fetchPage(page, pageSizeForExport);
-        allPackets = allPackets.concat(next.data || []);
-      }
+      const allPackets = responseData.data || [];
+      const totalRecords = responseData.pagination?.total_records ?? allPackets.length;
 
       if (allPackets.length === 0) {
         alert('No anomalous packets to export.');
@@ -767,6 +758,10 @@ const OperatorDetailView = ({ operator, onBack, getSeverityColor, getCategoryCol
       const groupSuffix = filterAnomalyGroup ? `_${filterAnomalyGroup}` : '';
       const dateStr = new Date().toISOString().split('T')[0];
       XLSX.writeFile(workbook, `anomalous_packets_${optId}${groupSuffix}_${dateStr}.xlsx`);
+
+      if (totalRecords > allPackets.length) {
+        alert(`This operator has ${totalRecords} anomalous packets. Only the ${allPackets.length} most recent were exported (export cap: ${ANOMALOUS_EXPORT_CAP}).`);
+      }
     } catch (err) {
       console.error('Error downloading anomalous packets:', err);
       alert('Failed to download anomalous packets. Please try again.');
