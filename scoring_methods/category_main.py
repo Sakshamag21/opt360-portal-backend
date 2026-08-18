@@ -145,12 +145,12 @@ def main(
         logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s: %(message)s')
         logger.info(f"Starting feature job (Spark-based): {feature_name}")
         import sys
-        # if len(sys.argv) >= 3:
-        #     feature_name = sys.argv[1]
-        #     feature_version= sys.argv[2]
+        if len(sys.argv) >= 3:
+            feature_name = sys.argv[1]
+            feature_version= sys.argv[2]
 
-        feature_name='document_category_score'
-        feature_version=1
+        # feature_name='document_category_score'
+        # feature_version=1
 
         spark = get_spark(f"opt360_{feature_name}_automation")
         print(spark)

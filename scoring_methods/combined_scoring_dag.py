@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow.models import Variable
 from operator360.signal_mechanism.signals_producer import get_signals_info, push_signals_kafka
 import logging
@@ -11,9 +11,10 @@ from airflow.utils.trigger_rule import TriggerRule
 import pytz
 from kubernetes.client import models as k8s
 
+from operator360.utils.pipeline_status import infer_category, wrap_shell_with_status_report, make_category_gate
+
 job_name = "combined_risk_scoring"
 desc = "Run all the combined_risk_score"
-schedule = "0 12 * * *"
 signal_api_base_ip="10.10.116.60:8000"
 
 
@@ -30,7 +31,7 @@ FEATURES={
     "work_category_score":{
         "feature_name":"work_category_score",
         "feature_version":2,
-        "feature_id":"work_category_score_24h_v2",
+        "feature_id":"work_category_score_v2",
         "dependencies":[],
         "signal_exists":False,
         "is_daily":True
@@ -38,7 +39,7 @@ FEATURES={
     "bio_category_score":{
         "feature_name":"bio_category_score",
         "feature_version":2,
-        "feature_id":"bio_category_score_24h_v2",
+        "feature_id":"bio_category_score_v2",
         "dependencies":[],
         "signal_exists":False,
         "is_daily":True
@@ -46,6 +47,7 @@ FEATURES={
     "hardware_category_score":{
         "feature_name":"hardware_category_score",
         "feature_version":2,
+        "feature_id":"hardware_category_score_v2",
         "dependencies":[],
         "signal_exists":False,
         "is_daily":True
@@ -53,6 +55,7 @@ FEATURES={
     "sustxn_category_score":{
         "feature_name":"sustxn_category_score",
         "feature_version":2,
+        "feature_id":"sustxn_category_score_v2",
         "dependencies":[],
         "signal_exists":False,
         "is_daily":True
@@ -60,6 +63,7 @@ FEATURES={
     "auth_category_score":{
         "feature_name":"auth_category_score",
         "feature_version":2,
+        "feature_id":"auth_category_score_v2",
         "dependencies":[],
         "signal_exists":False,
         "is_daily":True
@@ -67,6 +71,7 @@ FEATURES={
     "risk_score":{
         "feature_name":"risk_score",
         "feature_version":3,
+        "feature_id":"risk_score_v3",
         "dependencies":["work_category_score","bio_category_score","hardware_category_score","sustxn_category_score","auth_category_score"],
         "signal_exists":False,
         "is_daily":True
@@ -88,6 +93,7 @@ default_args = {
     "owner": "airflow",
     "depends_on_past": False,
     "start_date": datetime(2026, 5, 12),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -98,26 +104,34 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
-    schedule=schedule,
+    schedule=None,  # triggered only by controller_pipeline
     catchup=False,
     max_active_runs=3,
     max_active_tasks=2,
     tags=["Operator360","Category Level Scoring"]
 ) as dag:
     tasks = {}
+    category_gates = {}
 
     for key, cfg in FEATURES.items():
+        feature_category = infer_category(key)  # None for risk_score - no gate, no skip
+        task_id = f'task-id-{cfg["feature_name"]}-{cfg["feature_version"]}'
+        inner_cmd = f"""python3 -c "import boto3;session=boto3.session.Session(aws_access_key_id='9S0KLIQO7T2XCNGH4P4A',aws_secret_access_key='XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4');s3_client=session.client('s3',endpoint_url='http://10.10.103.12:425');s3_client.download_file('prd-bi-data-platform-uploads','sparkjobs/operator360/category_risk_scoring_combined/head_combined_risk_scoring.py','/tmp/head_combined_risk_scoring.py')" && python3 /tmp/head_combined_risk_scoring.py {cfg["feature_name"]} {cfg["feature_version"]}"""
         task = KubernetesPodOperator(
             namespace='strot-spark',
             service_account_name='strot-service-account',
             image='harbor-registry-prod.uidai.gov.in/data-platform/pyspark_duckdb:4.0.7',
             config_file='/opt/airflow/dags/gpu_kubeconfig_hdc',
             name= f'zzzz-{cfg["feature_name"]}-{cfg["feature_version"]}',
-            task_id=f'task-id-{cfg["feature_name"]}-{cfg["feature_version"]}',
+            task_id=task_id,
             cmds=["/bin/bash","-c"],
             arguments=[
-                f"""python3 -c "import boto3;session=boto3.session.Session(aws_access_key_id='9S0KLIQO7T2XCNGH4P4A',aws_secret_access_key='XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4');s3_client=session.client('s3',endpoint_url='http://10.10.103.12:425');s3_client.download_file('prd-bi-data-platform-uploads','sparkjobs/operator360/category_risk_scoring_combined/head_combined_risk_scoring.py','/tmp/head_combined_risk_scoring.py')" && python3 /tmp/head_combined_risk_scoring.py {cfg["feature_name"]} {cfg["feature_version"]}"""
+                wrap_shell_with_status_report(inner_cmd, dag_id=job_name, task_key=task_id, category=feature_category)
             ],
+            env_vars={
+                "PIPELINE_RUN_ID": "{{ dag_run.conf.get('pipeline_run_id') or run_id }}",
+                "TASK_LOG_URL": "{{ ti.log_url }}",
+            },
             container_resources=k8s.V1ResourceRequirements(
                 requests={"cpu": "1", "memory": "2Gi"},
                 limits={"cpu": "1", "memory": "2Gi"}
@@ -128,6 +142,11 @@ with DAG(
             log_events_on_failure=True,
         )
         tasks[key] = task
+
+        if feature_category:
+            if feature_category not in category_gates:
+                category_gates[feature_category] = make_category_gate(f"gate_{feature_category}", feature_category)
+            category_gates[feature_category] >> task
 
         if cfg['signal_exists']:
             signal_task = PythonOperator(

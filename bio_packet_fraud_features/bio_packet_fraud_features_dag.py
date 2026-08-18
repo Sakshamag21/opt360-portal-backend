@@ -1,18 +1,19 @@
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.python import PythonOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import operator360.bio_packet_fraud_features.insert_bio_packet_fraud_incidents as fn
 from operator360.signal_mechanism.signals_producer import get_signals_info, push_signals_kafka
 from operator360.utils.raw_table_validation import get_source_tables, check_raw_tables
 from operator360.utils.s3_audit_logger import audit_to_s3
+from operator360.utils.pipeline_status import report_status, parse_bool
 
 import logging
 from airflow.exceptions import AirflowSkipException
 
 job_name = "bio_packet_fraud_features"
+category = "bio"
 desc = "Run all MFC fraud incident features"
-schedule = "0 7 * * *"
 signal_api_base_ip = "10.10.116.60:8000"
 
 FEATURES = {
@@ -367,15 +368,15 @@ FEATURES = {
         "feature_id": "",
         "is_daily": True
     },
-    "bio_sfc_fraud_incidents": {
-        "feature_name": "bio_sfc_fraud_incidents_v1",
-        "feature_version": 1,
-        "sql_local_path": "/opt/airflow/dags/operator360/bio_packet_fraud_features/bio_sfc_fraud_incidents_v1.sql",
-        "dependencies": [],
-        "signal_exists": False,
-        "feature_id": "",
-        "is_daily": True
-    },
+    # "bio_sfc_fraud_incidents": {
+    #     "feature_name": "bio_sfc_fraud_incidents_v1",
+    #     "feature_version": 1,
+    #     "sql_local_path": "/opt/airflow/dags/operator360/bio_packet_fraud_features/bio_sfc_fraud_incidents_v1.sql",
+    #     "dependencies": [],
+    #     "signal_exists": False,
+    #     "feature_id": "",
+    #     "is_daily": True
+    # },
 }
 
 
@@ -388,35 +389,21 @@ def run_signals(feature_id):
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
 @audit_to_s3(dag_id=job_name)
-def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, is_daily=True, data_interval_start=None):
+@report_status(dag_id=job_name, category=category)
+def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, is_daily=True, data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
     logger = logging.getLogger(f"running {feature_name}:v{feature_version}")
 
     if is_daily:
-        if not data_interval_start:
-            raise ValueError("data_interval_start is missing for daily task check")
-            
-        try:
-            dt = datetime.fromisoformat(data_interval_start)
-            if dt.tzinfo is not None:
-                dt = dt.astimezone(ZoneInfo("Asia/Kolkata"))
-            else:
-                dt = dt.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Asia/Kolkata"))
-        except ValueError:
-            logger.warning("Could not parse data_interval_start: %s. Falling back to current time.", data_interval_start)
-            dt = datetime.now(ZoneInfo("Asia/Kolkata"))
-            
-        target_hour = 7  # Run at 7 AM as per schedule
-        
-        if dt.hour != target_hour:
-            logger.info("Skipping daily feature %s - logical hour is %d, not %d", 
-                       feature_name, dt.hour, target_hour)
-            print(f'Skipping feature {feature_name}')
-            raise AirflowSkipException(f"Skipping daily task - logical hour is {dt.hour}, not {target_hour} AM")
-        
+        # This DAG has no hourly-cadence features, so is_daily just means
+        # "only actually run on the manager's once-a-day promotion tick".
+        if not parse_bool(is_daily_run):
+            logger.info("Skipping %s - not the daily promotion run", feature_name)
+            raise AirflowSkipException("Skipping - not the daily promotion run")
+
         # ==========================================
-        # RAW DATA CHECK INTEGRATION (Only runs if is_daily is True and it is 7 AM)
+        # RAW DATA CHECK INTEGRATION - only reached on the promotion tick.
         # ==========================================
-        logger.info("Daily check passed. Verifying raw data availability for feature_id: %s", feature_id)
+        logger.info("Verifying raw data availability for feature_id: %s", feature_id)
         
         if feature_id:
             source_tables_res = get_source_tables(category="bio")
@@ -425,7 +412,7 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
                 logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
                 raise AirflowSkipException("Skipped because metadata DB lookup failed.")
                 
-            mapping = source_tables_res.get('mapping', {})
+            mapping = source_tables_res 
             source_table = mapping.get(feature_id)
             
             if not source_table:
@@ -458,7 +445,8 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 4, 13, tzinfo=ZoneInfo("Asia/Kolkata")),
-    "email": ["junior.devfsd6-tc@uidai.net.in"],
+    "execution_timeout": timedelta(minutes=20),
+    "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
     "retries": 1,
@@ -468,6 +456,7 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
+    schedule=None,  # triggered only by controller_pipeline
     catchup=False,
     max_active_runs=1,
     max_active_tasks=3,
@@ -487,7 +476,11 @@ with DAG(
                 "sql_file": cfg["sql_local_path"],
                 "end_date": "{{ ds }}",
                 "is_daily": cfg["is_daily"],
-                "data_interval_start": "{{ data_interval_start }}"
+                "data_interval_start": "{{ data_interval_start }}",
+                "pipeline_run_id": "{{ dag_run.conf.get('pipeline_run_id') or run_id }}",
+                "is_daily_run": "{{ dag_run.conf.get('is_daily_run', 'true') }}",
+                "log_url": "{{ ti.log_url }}",
+                "try_number": "{{ ti.try_number }}",
             }
         )
         tasks[key] = task

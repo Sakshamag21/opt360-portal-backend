@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow.models import Variable
 from operator360.signal_mechanism.signals_producer import get_signals_info, push_signals_kafka
 import logging
@@ -12,9 +12,10 @@ import pytz
 from kubernetes.client import models as k8s
 import boto3
 
+from operator360.utils.pipeline_status import infer_category, wrap_shell_with_status_report, make_category_gate
+
 job_name = "instance_risk_scoring"
 desc = "Run all the instance_risk_scoring"
-schedule = "0 11 * * *"
 signal_api_base_ip="10.10.116.60:8000"
 
 CEPH_ENDPOINT_URL = "http://10.10.103.12:425" 
@@ -29,15 +30,6 @@ custom_toleration = k8s.V1Toleration(
     value='true',
     effect='NoSchedule'
 )
-
-DEPENDENT_FEATURE_DAG={
-    "auth":"auth_category_features.json",
-    "bio":"bio_packet_fraud_features.json",
-    "sustxn":"sustxn_category_feature.json",
-    "work":"work_category_feature.json",
-    "hardware":"hardware_category_features.json",
-    "document":"document_features_combined.json"
-}
 
 FEATURES={
     "sustxn_res_mobilechange_score":{
@@ -334,6 +326,7 @@ default_args = {
     "owner": "airflow",
     "depends_on_past": False,
     "start_date": datetime(2026, 5, 12),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -344,26 +337,34 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
-    schedule=schedule,
+    schedule=None,  # triggered only by controller_pipeline
     catchup=False,
     max_active_runs=3,
     max_active_tasks=5,
     tags=["Operator360","Instance Level Scoring"]
 ) as dag:
     tasks = {}
+    category_gates = {}
 
     for key, cfg in FEATURES.items():
+        feature_category = infer_category(key)
+        task_id = f'task-id-{cfg["feature_name"]}-{cfg["feature_version"]}'
+        inner_cmd = f"""python3 -c "import boto3;session=boto3.session.Session(aws_access_key_id='9S0KLIQO7T2XCNGH4P4A',aws_secret_access_key='XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4');s3_client=session.client('s3',endpoint_url='http://10.10.103.12:425');s3_client.download_file('prd-bi-data-platform-uploads','sparkjobs/operator360/category_risk_scoring_combined/head_instance_scoring.py','/tmp/head_instance_scoring.py')" && python3 /tmp/head_instance_scoring.py {cfg["feature_name"]} {cfg["feature_version"]}"""
         task = KubernetesPodOperator(
             namespace='strot-spark',
             service_account_name='strot-service-account',
             image='harbor-registry-prod.uidai.gov.in/data-platform/pyspark_duckdb:4.0.7',
             config_file='/opt/airflow/dags/gpu_kubeconfig_hdc',
             name= f'zzzz-{cfg["feature_name"]}-{cfg["feature_version"]}',
-            task_id=f'task-id-{cfg["feature_name"]}-{cfg["feature_version"]}',
+            task_id=task_id,
             cmds=["/bin/bash","-c"],
             arguments=[
-                f"""python3 -c "import boto3;session=boto3.session.Session(aws_access_key_id='9S0KLIQO7T2XCNGH4P4A',aws_secret_access_key='XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4');s3_client=session.client('s3',endpoint_url='http://10.10.103.12:425');s3_client.download_file('prd-bi-data-platform-uploads','sparkjobs/operator360/category_risk_scoring_combined/head_instance_scoring.py','/tmp/head_instance_scoring.py')" && python3 /tmp/head_instance_scoring.py {cfg["feature_name"]} {cfg["feature_version"]}"""
+                wrap_shell_with_status_report(inner_cmd, dag_id=job_name, task_key=task_id, category=feature_category)
             ],
+            env_vars={
+                "PIPELINE_RUN_ID": "{{ dag_run.conf.get('pipeline_run_id') or run_id }}",
+                "TASK_LOG_URL": "{{ ti.log_url }}",
+            },
             container_resources=k8s.V1ResourceRequirements(
                 requests={"cpu": "1", "memory": "2Gi"},
                 limits={"cpu": "1", "memory": "2Gi"}
@@ -375,6 +376,11 @@ with DAG(
 
         )
         tasks[key] = task
+
+        if feature_category:
+            if feature_category not in category_gates:
+                category_gates[feature_category] = make_category_gate(f"gate_{feature_category}", feature_category)
+            category_gates[feature_category] >> task
 
         if cfg['signal_exists']:
             signal_task = PythonOperator(

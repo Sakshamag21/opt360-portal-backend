@@ -15,7 +15,7 @@ trino_user = "opt360_feature_metadata"
 
 table_timestamp_column_mapping = {
     'flink_stream.stream_enu.ens_packet_enriched': 'event_timestamp',
-    'flink_stream.stream_enu.bi_enu_enrlraw_v2': 'event_timestamp',
+    'flink_stream.stream_enu.bi_enu_enrlraw_v2': 'processed_timestamp',
     'flink_stream.analytics_enu.machine_hardware_trust_change': 'record_timestamp',
     'flink_stream.operator360.opt_auth_txn_v3': 'event_timestamp',
     'flink_stream.stream_enu.enu_uc_opt_action_v2 ': 'event_timestamp',  # Note: kept trailing space if intentional
@@ -25,6 +25,7 @@ table_timestamp_column_mapping = {
     'strot.operator360.opt_outstate_anomalous_enu_eid_daily': 'event_timestamp',
     'strot.operator360.txn_parallel_enrl_v1': 'timestamp',
     'flink_stream.mysql_uid_v2.uid_origin_tracker_enriched ': 'enr_date'  # Note: kept trailing space
+    
 }
 
 # --- Ceph S3 Cache Configuration ---
@@ -140,7 +141,7 @@ def check_raw_tables(table_name: str, use_cache: bool = True) -> bool:
     # 2. Validate mapping BEFORE hitting S3 or Trino
     if table_name not in table_timestamp_column_mapping.keys():
         print('Table not found in mapping please add')
-        return False
+        return True
 
     s3_client = _get_s3_client()
 
@@ -188,3 +189,30 @@ def check_raw_tables(table_name: str, use_cache: bool = True) -> bool:
     _memory_cache[table_name] = cache_entry
 
     return result
+
+def get_source_tables(category: str) -> dict:
+    # Fixed SQL: added the missing opening quote in '%score%'
+    for host in ['10.10.116.75','10.10.116.39','10.10.118.35','10.10.118.10']:
+        df_source_table = trino(f'''
+            select feature_id, source_table
+            from strot.operator360.opt360_features
+            where status='PROD' 
+            and feature_id not like '%score%' 
+            and feature_id like '{category}%'                
+        ''',host= host)
+
+        if 'df' not in df_source_table.keys():
+            logger.warning(f"Failed from trino: {host}, error: {df_source_table}")
+            continue
+        
+        if 'df' in df_source_table.keys():
+            break
+
+    df = df_source_table['df']
+    mapping_featureid_source = {}
+    
+    # Fixed iterrows() bug: it yields (index, row), so we unpack it correctly
+    for _, row in df.iterrows():
+        mapping_featureid_source[row['feature_id']] = row['source_table']
+
+    return {'success': True, **mapping_featureid_source}

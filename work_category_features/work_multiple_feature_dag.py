@@ -1,30 +1,31 @@
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from operator360.work_category_features.insert_work_features import run_one_feature
 from operator360.signal_mechanism.signals_producer import get_signals_info, push_signals_kafka
 from operator360.utils.raw_table_validation import get_source_tables, check_raw_tables
 from operator360.utils.s3_audit_logger import audit_to_s3
+from operator360.utils.pipeline_status import report_status, parse_bool
 import logging
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.trigger_rule import TriggerRule
 
 job_name = "work_category_feature"
+category = "work"
 desc = "Run all the  Work Features"
-schedule = "0 * * * *"
 signal_api_base_ip = "10.10.116.60:8000"
 
 FEATURES = {
-    "work_machine_id_change_instances_count_daily": {
-        "feature_name": "work_machine_id_change_instances_count_daily",
-        "feature_version": 2,
-        "feature_id": "work_machine_id_change_instances_count_daily_v2",
-        "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_machine_id_change_instances_count_daily_v2.sql",
-        "dependencies": [],
-        "signal_exists": False,
-        "frequency": "daily"
-    },
+    # "work_machine_id_change_instances_count_daily": {
+    #     "feature_name": "work_machine_id_change_instances_count_daily",
+    #     "feature_version": 2,
+    #     "feature_id": "work_machine_id_change_instances_count_daily_v2",
+    #     "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_machine_id_change_instances_count_daily_v2.sql",
+    #     "dependencies": [],
+    #     "signal_exists": False,
+    #     "frequency": "daily"
+    # },
     "work_pob_declared_instances": {
         "feature_name": "work_pob_declared_instances",
         "feature_version": 1,
@@ -124,15 +125,15 @@ FEATURES = {
         "signal_exists": False,
         "frequency": "hourly"
     },
-    "work_machine_sync_gap": {
-        "feature_name": "work_machine_sync_gap",
-        "feature_version": 1,
-        "feature_id": "work_machine_sync_gap_v1",
-        "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_machine_sync_gap_v2.sql",
-        "dependencies": [],
-        "signal_exists": False,
-        "frequency": "daily"
-    },
+    # "work_machine_sync_gap": {
+    #     "feature_name": "work_machine_sync_gap",
+    #     "feature_version": 1,
+    #     "feature_id": "work_machine_sync_gap_v1",
+    #     "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_machine_sync_gap_v2.sql",
+    #     "dependencies": [],
+    #     "signal_exists": False,
+    #     "frequency": "daily"
+    # },
     "work_machineip_isp_change_count_daily": {
         "feature_name": "work_machineip_isp_change_count_daily",
         "feature_version": 1,
@@ -163,9 +164,10 @@ def run_signals(feature_id):
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
 @audit_to_s3(dag_id=job_name)
-def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, frequency="daily", data_interval_start=None):
+@report_status(dag_id=job_name, category=category)
+def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, frequency="daily", data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
     logger = logging.getLogger(f"running {feature_name}:v{feature_version}")
-    
+
     # Use Airflow's logical execution time instead of wall-clock time for backfill safety
     if not data_interval_start:
         dt = datetime.now(ZoneInfo("Asia/Kolkata"))
@@ -180,30 +182,34 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
             logger.warning("Could not parse data_interval_start: %s. Falling back to current time.", data_interval_start)
             dt = datetime.now(ZoneInfo("Asia/Kolkata"))
 
-    target_hour = 6  # 6 AM
     target_weekday = 0  # Monday
+    is_daily_run = parse_bool(is_daily_run)
 
-    # 1. Evaluate Daily Constraint
-    if frequency == "daily":
-        if dt.hour != target_hour:
-            logger.info("Skipping daily feature %s - not %d AM (logical hour: %s)", 
-                        feature_name, target_hour, dt.hour)
-            raise AirflowSkipException(f"Skipping daily task - logical hour is {dt.hour}, not {target_hour} AM")
-
-    # 2. Evaluate Weekly Constraint
+    if frequency == "hourly":
+        # The manager triggers this DAG every hour specifically so these
+        # keep running on their real cadence - always eligible, and their
+        # S3-reported status is excluded from the daily category judgement.
+        pass
     elif frequency == "weekly":
-        if dt.weekday() != target_weekday or dt.hour != target_hour:
-            logger.info("Skipping weekly feature %s - Target: Day %d at %d AM (Logical: Day %d at hour %s)", 
-                        feature_name, target_weekday, target_hour, dt.weekday(), dt.hour)
+        if not is_daily_run:
+            logger.info("Skipping weekly feature %s - not the daily promotion run", feature_name)
+            raise AirflowSkipException("Skipping weekly task - not the daily promotion run")
+        if dt.weekday() != target_weekday:
+            logger.info("Skipping weekly feature %s - target weekday %d, logical weekday %d",
+                        feature_name, target_weekday, dt.weekday())
             raise AirflowSkipException(
-                f"Skipping weekly task - Logical day/hour is {dt.weekday()}/{dt.hour}, "
-                f"target is {target_weekday}/{target_hour} AM"
+                f"Skipping weekly task - logical weekday is {dt.weekday()}, target is {target_weekday}"
             )
+    else:  # "daily"
+        if not is_daily_run:
+            logger.info("Skipping daily feature %s - not the daily promotion run", feature_name)
+            raise AirflowSkipException("Skipping daily task - not the daily promotion run")
 
     # ==========================================
-    # RAW DATA CHECK INTEGRATION
+    # RAW DATA CHECK INTEGRATION - only reached for hourly features (every
+    # tick) or daily/weekly features on the promotion tick.
     # ==========================================
-    logger.info("Time check passed. Verifying raw data availability for feature_id: %s", feature_id)
+    logger.info("Verifying raw data availability for feature_id: %s", feature_id)
     
     if feature_id:
         source_tables_res = get_source_tables(category="work")
@@ -212,7 +218,7 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
             logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
             raise RuntimeError(f"Metadata DB lookup failed. Error: {source_tables_res.get('error')}")
             
-        mapping = source_tables_res.get('mapping', {})
+        mapping = source_tables_res 
         source_table = mapping.get(feature_id)
         
         if not source_table:
@@ -242,6 +248,7 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 4, 13),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -252,6 +259,7 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
+    schedule=None,  # triggered only by controller_pipeline
     catchup=False,
     max_active_runs=1,
     max_active_tasks=1,
@@ -274,7 +282,11 @@ with DAG(
                 "sql_file": cfg["sql_local_path"],
                 "end_date": "{{ ds }}",
                 "frequency": cfg["frequency"],
-                "data_interval_start": "{{ data_interval_start }}"
+                "data_interval_start": "{{ data_interval_start }}",
+                "pipeline_run_id": "{{ dag_run.conf.get('pipeline_run_id') or run_id }}",
+                "is_daily_run": "{{ dag_run.conf.get('is_daily_run', 'true') }}",
+                "log_url": "{{ ti.log_url }}",
+                "try_number": "{{ ti.try_number }}",
             },
         )
         tasks[feature_id] = task

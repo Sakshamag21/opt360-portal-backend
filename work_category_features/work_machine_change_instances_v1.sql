@@ -2,7 +2,7 @@ INSERT INTO {destination_table}
     with tab1 as (
             select enrl_client_machine_id as mach_id, upper(enrl_oper_code) as opt_id, date(enrl_end_date) as date 
             from flink_stream.stream_enu.bi_enu_enrlraw_v2
-            where date(enrl_end_date)>=date('{min_pkt_date}') and date(enrl_end_date)<=date('{max_pkt_date}') and enrl_eid not like '000000%'
+            where date(processed_timestamp)>=date('{min_pkt_date}') and date(enrl_end_date)>=date('{min_pkt_date}') and date(enrl_end_date)<=date('{max_pkt_date}') and enrl_eid not like '000000%'
         ),
         tab2 as (
             select opt_id, mach_id, date , count(*) as coun from tab1 where opt_id!='SELECT'

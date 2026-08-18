@@ -4,7 +4,7 @@ insert into {destination_table}
             upper(enrl_oper_code) as opt_id,
             enrl_oper_name
         FROM flink_stream.stream_enu.bi_enu_enrlraw_v2
-        where event_timestamp>=date('{min_pkt_date}') and date(event_timestamp)< date('{max_pkt_date}') and upper(enrl_oper_code)!='SSUP_OPERATOR' and bio_dev_modality!='Face' and enrl_client_machine_id not like '%SSUP%'
+        where date(processed_timestamp)>=date('{min_pkt_date}') and event_timestamp>=date('{min_pkt_date}') and date(event_timestamp)< date('{max_pkt_date}') and upper(enrl_oper_code)!='SSUP_OPERATOR' and bio_dev_modality!='Face' and enrl_client_machine_id not like '%SSUP%'
         group by 1,2 
     ),
     tab2 as(

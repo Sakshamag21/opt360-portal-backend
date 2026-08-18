@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from airflow.sdk import DAG, TriggerRule
@@ -10,17 +10,18 @@ from operator360.work_category_features.insert_work_features import run_one_feat
 from operator360.signal_mechanism.signals_producer import get_signals_info, push_signals_kafka
 from operator360.utils.raw_table_validation import get_source_tables, check_raw_tables
 from operator360.utils.s3_audit_logger import audit_to_s3
+from operator360.utils.pipeline_status import report_status, parse_bool
 
 job_name = "auth_category_features"
+category = "auth"
 desc = "Run all the  Auth Features"
-schedule = "0 * * * *"
 signal_api_base_ip = "10.10.116.60:8000"
 
 FEATURES = {
     "auth_device_change_incidents": {
         "feature_name": "auth_device_change_incidents",
         "feature_version": 1,
-        "feature_id": "auth_device_change_incidents_24h_v1",
+        "feature_id": "auth_device_change_incidents_v1",
         "sql_local_path": "/opt/airflow/dags/operator360/auth_features_combined/auth_device_change_incidents_24h_v1.sql",
         "dependencies": [],
         "signal_exists": False,
@@ -29,7 +30,7 @@ FEATURES = {
     "auth_modality_change_incidents": {
         "feature_name": "auth_modality_change_incidents",
         "feature_version": 1,
-        "feature_id": "auth_modality_change_incidents_24h_v1",
+        "feature_id": "auth_modality_change_incidents_v1",
         "sql_local_path": "/opt/airflow/dags/operator360/auth_features_combined/auth_modality_change_incidents_24h_v1.sql",
         "dependencies": [],
         "signal_exists": False,
@@ -85,42 +86,28 @@ def run_signals(feature_id):
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
 @audit_to_s3(dag_id=job_name)
-def run_single_features(feature_name, feature_version, feature_id,  sql_file, end_date, is_daily=False, data_interval_start=None):
+@report_status(dag_id=job_name, category=category)
+def run_single_features(feature_name, feature_version, feature_id,  sql_file, end_date, is_daily=False, data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
     logger = logging.getLogger(f"running {feature_name}:v{feature_version}")
 
     if is_daily:
-        # 1. Check if it's the right hour to run the daily task
-        if not data_interval_start:
-            raise ValueError("data_interval_start is missing for daily task check")
-            
-        try:
-            dt = datetime.fromisoformat(data_interval_start)
-            if dt.tzinfo is not None:
-                dt = dt.astimezone(ZoneInfo("Asia/Kolkata"))
-            else:
-                dt = dt.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Asia/Kolkata"))
-        except ValueError:
-            logger.warning("Could not parse data_interval_start: %s. Falling back to current time.", data_interval_start)
-            dt = datetime.now(ZoneInfo("Asia/Kolkata"))
-            
-        target_hour = 6
-        
-        if dt.hour != target_hour:
-            logger.info("Skipping daily feature %s - logical hour is %d, not %d", 
-                        feature_name, dt.hour, target_hour)
-            print(f'Skipping feature {feature_name}')
-            raise AirflowSkipException(f"Skipping daily task - logical hour is {dt.hour}, not {target_hour} AM")
-        
-        # 2. Raw Data Check (ONLY runs if is_daily is True AND it is 6 AM)
-        logger.info("Daily check passed. Verifying raw data availability for feature_id: %s", feature_id)
-        
+        # This DAG has no hourly-cadence features, so is_daily just means
+        # "only actually run on the manager's once-a-day promotion tick" -
+        # every other hourly tick this feature is a no-op skip.
+        if not parse_bool(is_daily_run):
+            logger.info("Skipping %s - not the daily promotion run", feature_name)
+            raise AirflowSkipException("Skipping - not the daily promotion run")
+
+        # Raw Data Check - only reached on the promotion tick.
+        logger.info("Verifying raw data availability for feature_id: %s", feature_id)
+
         source_tables_res = get_source_tables(category="auth")
         
         if not source_tables_res.get('success'):
             logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
             raise AirflowSkipException("Skipped because metadata DB lookup failed.")
             
-        mapping = source_tables_res.get('mapping', {})
+        mapping = source_tables_res 
         source_table = mapping.get(feature_id)
         
         if not source_table:
@@ -151,6 +138,7 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 4, 13, tzinfo=ZoneInfo("Asia/Kolkata")),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -161,6 +149,7 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
+    schedule=None,  # triggered only by controller_pipeline
     catchup=False,
     max_active_runs=3,
     max_active_tasks=5,
@@ -180,7 +169,11 @@ with DAG(
                 "sql_file": cfg["sql_local_path"],
                 "end_date": "{{ data_interval_start | ds }}",  # Airflow 3 preferred macro
                 "is_daily": cfg["is_daily"],
-                "data_interval_start": "{{ data_interval_start }}"  # Used for backfill hour check
+                "data_interval_start": "{{ data_interval_start }}",
+                "pipeline_run_id": "{{ dag_run.conf.get('pipeline_run_id') or run_id }}",
+                "is_daily_run": "{{ dag_run.conf.get('is_daily_run', 'true') }}",
+                "log_url": "{{ ti.log_url }}",
+                "try_number": "{{ ti.try_number }}",
             },
         )
         tasks[key] = task
