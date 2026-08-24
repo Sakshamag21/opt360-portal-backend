@@ -25,6 +25,6 @@ INSERT INTO {destination_table}
           '{FEATURE_VERSION}' AS feature_version,
           no_of_modality_changes as feature_value,
           current_timestamp AT TIME ZONE 'Asia/Kolkata' as timestamp,
-          cast(device_codes as Varchar) as comments
-        from tab1
+          cast(array_join(device_codes,',') as Varchar) as comments
+        from tab3
     

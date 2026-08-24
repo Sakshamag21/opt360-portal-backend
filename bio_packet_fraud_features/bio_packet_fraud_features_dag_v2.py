@@ -1,3 +1,6 @@
+# v2: identical to bio_packet_fraud_features_dag.py except dag_id/job_name, so
+# operator_dag_manager_v2.py's retry orchestration can trigger it in isolation
+# from the v1 pipeline. See operator_dag_manager_v2.py for the retry logic.
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
@@ -7,11 +10,12 @@ from operator360.signal_mechanism.signals_producer import get_signals_info, push
 from operator360.utils.raw_table_validation import get_source_tables, check_raw_tables
 from operator360.utils.s3_audit_logger import audit_to_s3
 from operator360.utils.pipeline_status import report_status, parse_bool
+from operator360.utils.pipeline_status_v2 import skip_if_already_succeeded
 
 import logging
 from airflow.exceptions import AirflowSkipException
 
-job_name = "bio_packet_fraud_features"
+job_name = "bio_packet_fraud_features_v2"
 category = "bio"
 desc = "Run all MFC fraud incident features"
 signal_api_base_ip = "10.10.116.60:8000"
@@ -385,9 +389,10 @@ def run_signals(feature_id):
         res_try = get_signals_info(feature_id)
         for signal_metadata in res_try:
             print(push_signals_kafka(signal_metadata))
-    except Exception as e:    
+    except Exception as e:
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
+@skip_if_already_succeeded(dag_id=job_name)
 @audit_to_s3(dag_id=job_name)
 @report_status(dag_id=job_name, category=category)
 def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, is_daily=True, data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
@@ -404,17 +409,17 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
         # RAW DATA CHECK INTEGRATION - only reached on the promotion tick.
         # ==========================================
         logger.info("Verifying raw data availability for feature_id: %s", feature_id)
-        
+
         if feature_id:
             source_tables_res = get_source_tables(category="bio")
-            
+
             if not source_tables_res.get('success'):
                 logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
                 raise AirflowSkipException("Skipped because metadata DB lookup failed.")
-                
-            mapping = source_tables_res 
+
+            mapping = source_tables_res
             source_table = mapping.get(feature_id)
-            
+
             if not source_table:
                 logger.warning("No source_table found in metadata for feature_id=%s. Proceeding with feature run anyway.", feature_id)
             else:
@@ -428,7 +433,7 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
     try:
         logger.info("Running feature %s v%s with sql=%s and end_date=%s",
                     feature_name, feature_version, sql_file, end_date)
-        
+
         fn.run_one_feature(
             feature_name=feature_name,
             feature_version=feature_version,
@@ -445,7 +450,7 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 4, 13, tzinfo=ZoneInfo("Asia/Kolkata")),
-    # "execution_timeout": timedelta(minutes=20),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -456,11 +461,11 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
-    schedule=None,  # triggered only by controller_pipeline
+    schedule=None,  # triggered only by controller_pipeline_v2
     catchup=False,
     max_active_runs=1,
     max_active_tasks=3,
-    tags=["Operator360", "Bio Category"],
+    tags=["Operator360", "Bio Category", "v2"],
 ) as dag:
 
     tasks = {}

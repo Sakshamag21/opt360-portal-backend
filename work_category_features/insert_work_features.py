@@ -79,7 +79,6 @@ def run_one_feature(feature_name: str, feature_version: int, sql_file: str, end_
         current_end_date = datetime.now(ist).date()
 
     if params.get("min_pkt_date"):
-        # Strip off any time components if Trino returned a full timestamp
         min_pkt_date = str(params.get("min_pkt_date")).split(" ")[0]
         
         if params.get("max_pkt_date"):
@@ -89,7 +88,6 @@ def run_one_feature(feature_name: str, feature_version: int, sql_file: str, end_
             
     elif params.get("period_in_days"):
         raw = str(params["period_in_days"]).strip()
-        # take only the leading integer in case extra junk sneaks in
         digits = ""
         for ch in raw:
             if ch.isdigit():

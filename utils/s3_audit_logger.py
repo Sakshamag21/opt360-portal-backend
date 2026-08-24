@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 CEPH_ENDPOINT_URL = "http://10.10.103.12:425" 
 CEPH_ACCESS_KEY = "9S0KLIQO7T2XCNGH4P4A"
 CEPH_SECRET_KEY = "XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4"
-CEPH_BUCKET_NAME = "prd-bi-master-events-25"
+CEPH_BUCKET_NAME = "prd-bi-data-platform-test"
 CEPH_CACHE_PREFIX = "cache/airflow/operator360" 
 
 

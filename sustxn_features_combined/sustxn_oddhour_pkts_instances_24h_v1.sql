@@ -12,7 +12,7 @@ tab2 as (
     group by 1
 )
 select entity_id as entity_id,
-        '{FEATURE_NAME}_{update_window}_v{FEATURE_VERSION}' AS feature_id,
+        '{FEATURE_NAME}_24h_v{FEATURE_VERSION}' AS feature_id,
         '{FEATURE_NAME}' AS feature_name,
         '{FEATURE_VERSION}' AS feature_version,
         total_count as feature_value,

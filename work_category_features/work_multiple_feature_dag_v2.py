@@ -1,3 +1,6 @@
+# v2: identical to work_multiple_feature_dag.py except dag_id/job_name, so
+# operator_dag_manager_v2.py's retry orchestration can trigger it in isolation
+# from the v1 pipeline. See operator_dag_manager_v2.py for the retry logic.
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
@@ -7,11 +10,12 @@ from operator360.signal_mechanism.signals_producer import get_signals_info, push
 from operator360.utils.raw_table_validation import get_source_tables, check_raw_tables
 from operator360.utils.s3_audit_logger import audit_to_s3
 from operator360.utils.pipeline_status import report_status, parse_bool
+from operator360.utils.pipeline_status_v2 import skip_if_already_succeeded
 import logging
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.trigger_rule import TriggerRule
 
-job_name = "work_category_feature"
+job_name = "work_category_feature_v2"
 category = "work"
 desc = "Run all the  Work Features"
 signal_api_base_ip = "10.10.116.60:8000"
@@ -26,7 +30,6 @@ FEATURES = {
     #     "signal_exists": False,
     #     "frequency": "daily"
     # },
-    
     "work_pob_declared_instances": {
         "feature_name": "work_pob_declared_instances",
         "feature_version": 1,
@@ -153,33 +156,6 @@ FEATURES = {
         "signal_exists": False,
         "frequency": "daily"
     },
-    "work_packet_upload_new_count_cumulative": {
-        "feature_name": "work_packet_upload_new_count_cumulative",
-        "feature_version": 1,
-        "feature_id": "work_packet_upload_new_count_cumulative_v1",
-        "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_cumulative.sql",
-        "dependencies": ['work_packet_upload_new_count_daily'],
-        "signal_exists": False,
-        "frequency": "daily"
-    },
-    "work_packet_upload_total_count_cumulative": {
-        "feature_name": "work_packet_upload_total_count_cumulative",
-        "feature_version": 1,
-        "feature_id": "work_packet_upload_total_count_cumulative_v1",
-        "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_cumulative.sql",
-        "dependencies": ['work_packet_upload_total_count_daily'],
-        "signal_exists": True,
-        "frequency": "daily"
-    },
-    "work_packet_upload_update_count_cumulative": {
-        "feature_name": "work_packet_upload_update_count_cumulative",
-        "feature_version": 1,
-        "feature_id": "work_packet_upload_update_count_cumulative_v1",
-        "sql_local_path": "/opt/airflow/dags/operator360/work_category_features/work_cumulative.sql",
-        "dependencies": ['work_packet_upload_update_count_daily'],
-        "signal_exists": False,
-        "frequency": "daily"
-    }
 }
 
 
@@ -191,6 +167,7 @@ def run_signals(feature_id):
     except Exception as e:
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
+@skip_if_already_succeeded(dag_id=job_name)
 @audit_to_s3(dag_id=job_name)
 @report_status(dag_id=job_name, category=category)
 def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, frequency="daily", data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
@@ -238,17 +215,17 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
     # tick) or daily/weekly features on the promotion tick.
     # ==========================================
     logger.info("Verifying raw data availability for feature_id: %s", feature_id)
-    
+
     if feature_id:
         source_tables_res = get_source_tables(category="work")
-        
+
         if not source_tables_res.get('success'):
             logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
             raise RuntimeError(f"Metadata DB lookup failed. Error: {source_tables_res.get('error')}")
-            
-        mapping = source_tables_res 
+
+        mapping = source_tables_res
         source_table = mapping.get(feature_id)
-        
+
         if not source_table:
             logger.warning("No source_table found in metadata for feature_id=%s. Proceeding with feature run anyway.", feature_id)
         else:
@@ -276,7 +253,7 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 4, 13),
-    # "execution_timeout": timedelta(minutes=20),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -287,11 +264,11 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
-    schedule=None,  # triggered only by controller_pipeline
+    schedule=None,  # triggered only by controller_pipeline_v2
     catchup=False,
     max_active_runs=1,
     max_active_tasks=1,
-    tags=["Operator360", "Work Category"]
+    tags=["Operator360", "Work Category", "v2"]
 ) as dag:
 
     tasks = {}
@@ -299,7 +276,7 @@ with DAG(
     # 1. Define all tasks and assign standard trigger rules
     for key, cfg in FEATURES.items():
         feature_id = cfg['feature_id']
-        
+
         task = PythonOperator(
             task_id=f"run_{feature_id}",
             python_callable=run_single_features,
@@ -327,20 +304,20 @@ with DAG(
                     "feature_id": feature_id
                 },
                 # Default rule is ALL_SUCCESS. If upstream fails, this is skipped!
-                trigger_rule=TriggerRule.ALL_SUCCESS 
+                trigger_rule=TriggerRule.ALL_SUCCESS
             )
             tasks[f"signals_{feature_id}"] = signal_task
 
     # 2. Map explicit Feature-to-Feature and Feature-to-Signal relationships cleanly
     for key, cfg in FEATURES.items():
         feature_id = cfg['feature_id']
-        
+
         # Inter-feature cross dependencies
         if "dependencies" in cfg and cfg["dependencies"]:
             for dep in cfg["dependencies"]:
                 if dep in tasks:
                     tasks[dep] >> tasks[feature_id]
-        
+
         # Direct parent-child feature to signal mapping
         if cfg['signal_exists']:
             signal_key = f"signals_{feature_id}"

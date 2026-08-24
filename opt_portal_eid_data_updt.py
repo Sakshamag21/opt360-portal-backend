@@ -269,7 +269,7 @@ SELECT
     DATE_PARSE(SUBSTRING(enrolment_eid, 15), '%Y%m%d%H%i%s') as packet_timestamp
 FROM flink_stream.stream_enu.ens_packet_enriched 
 WHERE 
-    event_timestamp >= DATE(current_date- interval '2' day) 
+    event_timestamp >= DATE(current_date- interval '7' day) 
     AND (HOUR(DATE_PARSE(SUBSTRING(enrolment_eid, 15), '%Y%m%d%H%i%s')) < 6 OR HOUR(DATE_PARSE(SUBSTRING(enrolment_eid, 15), '%Y%m%d%H%i%s')) >= 22) 
     AND session_operatorid IS NOT NULL 
     AND session_operatorid NOT IN ('ssup_operator', 'mou_operator') 
@@ -331,7 +331,7 @@ WHEN MATCHED THEN UPDATE SET
 '''
 
 default_args = {
-    'owner': 'airflow',
+    'owner': 'Saksham Agarwal',
     'depends_on_past': False,
     'start_date': datetime(2025, 12, 2),
     'email': ['techexe16.yp25@uidai.net.in'],
@@ -344,7 +344,7 @@ dag = DAG(
     'opt_portal_individual_eid_table_updt',
     default_args=default_args,
     description='DAG to update all the eid tables',
-    schedule='30 9 * * *',
+    schedule='30 0 * * *',
     catchup=False
 )
 

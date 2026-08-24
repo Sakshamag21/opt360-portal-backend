@@ -26,42 +26,11 @@ RISK_WEIGHTAGE = {
 
 def get_spark(job_name: str):
     spark = SparkSession.builder \
-        .master("local[*]") \
-        .appName(job_name) \
-        .config("spark.driver.extraJavaOptions", "-Dlog4j.configuration=file:log4j.properties") \
-        .config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider") \
-        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-        .config("spark.hadoop.fs.s3a.path.style.access", "true") \
-        .config("spark.hadoop.fs.s3a.secret.key", "XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4") \
-        .config("spark.hadoop.fs.s3a.access.key", "9S0KLIQO7T2XCNGH4P4A") \
-        .config("spark.hadoop.fs.s3a.endpoint", "http://10.10.103.12:425") \
-        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
-        .config("spark.sql.catalog.strot", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.strot.type", "hive") \
-        .config("spark.sql.catalog.strot.uri", "thrift://10.10.116.77:9083") \
-        .config("spark.sql.catalog.flink_stream", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.flink_stream.type", "hive") \
-        .config("spark.sql.catalog.flink_stream.uri", "thrift://10.10.112.24:32613") \
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic") \
-        .config("spark.driver.memory",'12g') \
-        .config("spark.executor.memory",'60g') \
-        .config("spark.executor.memoryOverhead",'20g') \
-        .config("spark.memory.fraction", "0.9") \
-        .config("spark.dynamicAllocation.enabled", "true") \
-        .config("spark.dynamicAllocation.minExecutors", '1') \
-        .config("spark.dynamicAllocation.maxExecutors", '12') \
-        .config("spark.shuffle.service.enabled", "true") \
-        .config("spark.dynamicAllocation.shuffleTracking.enabled", "true") \
-        .config("spark.decommission.enabled", "true") \
-        .config("spark.storage.decommission.shuffleBlocks.enabled", "true") \
-        .config("spark.sql.broadcastTimeout", "600") \
-        .config("spark.default.parallelism","200") \
-        .config("spark.sql.shuffle.partitions", '200') \
-        .config("spark.network.timeout", "800s") \
-        .config("spark.executor.heartbeatInterval", "200s") \
-        .config("spark.sql.files.maxPartitionBytes","128m") \
-        .config("spark.sql.adaptive.enabled", "true") \
-        .config("spark.sql.adaptive.coalescePartitions.enabled","true")\
+        .appName("opt360-catgeory-scoring") \
+        .remote("sc://spark-connect-service.strot-spark.svc.cluster.local:15002") \
+        .config("spark.sql.legacy.mysql.bitArrayMapping.enabled","true") \
+        .config("spark.default.parallelism","800") \
+        .config("spark.sql.shuffle.partitions", '800') \
         .getOrCreate()
     return spark
 
@@ -96,11 +65,12 @@ def softmax_scoring(
                 feature_name, 
                 feature_value,
                 ROW_NUMBER() OVER (
-                    PARTITION BY entity_id, feature_name 
+                    PARTITION BY entity_id, feature_id 
                     ORDER BY timestamp DESC
                 ) AS rn 
             FROM strot.operator360.features_risk_v1
             WHERE timestamp <= DATE('{max_date}')
+            and timestamp >= date(date('{max_date}') - interval '7' days)
         ) 
         WHERE rn = 1
     """)
@@ -178,6 +148,7 @@ def weighted_average(
                 ) AS rn 
             FROM strot.operator360.features_risk_v1
             WHERE timestamp <= DATE('{max_date}')
+            and timestamp>= date(date('{max_date}') - interval '7' days)
         ) 
         WHERE rn = 1
     """)
@@ -241,6 +212,7 @@ def max_scoring(
                 ) AS rn 
             FROM strot.operator360.features_risk_v1
             WHERE date(timestamp) = DATE('{max_date}')
+            and timestamp>= date(date('{max_date}') - interval '7' days)
         ) 
         WHERE rn = 1
     """)

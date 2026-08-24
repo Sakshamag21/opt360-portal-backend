@@ -73,7 +73,7 @@ def build_merge_query(partition_date: str) -> str:
             event_timestamp,
             client_type
         FROM flink_stream.stream_enu.bi_enu_enrlraw_v2
-        WHERE date(event_timestamp) = date('{partition_date}')
+        WHERE date(processed_timestamp)>=date('{partition_date}') and date(event_timestamp) = date('{partition_date}')
         AND enrl_status LIKE '%SUCCESS%'
         AND enrl_client_version != '2.0.0.0'
     ),
@@ -222,7 +222,7 @@ def run_parallel_trans_update(**context):
 
 # ---------------- DAG definition ----------------
 default_args = {
-    "owner": "airflow",
+    "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 2, 12),
     "email": ["techexe16.yp25@uidai.net.in"],

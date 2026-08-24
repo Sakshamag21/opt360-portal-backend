@@ -26,8 +26,8 @@ INSERT INTO {destination_table}
           '{FEATURE_VERSION}' AS feature_version,
           no_of_same_modality_device_change as feature_value,
           current_timestamp AT TIME ZONE 'Asia/Kolkata' as timestamp,
-          cast(device_codes as Varchar) as comments
-        from tab1
+          cast(array_join(device_codes,',') as Varchar) as comments
+        from tab3
         where main_auth_type='I'
     union All
     select opt_id as entity_id,
@@ -36,8 +36,8 @@ INSERT INTO {destination_table}
           '{FEATURE_VERSION}' AS feature_version,
           no_of_same_modality_device_change as feature_value,
           current_timestamp AT TIME ZONE 'Asia/Kolkata' as timestamp,
-          cast(device_codes as Varchar) as comments
-        from tab1
+          cast(array_join(device_codes,',') as Varchar) as comments
+        from tab3
         where main_auth_type='F'
     union All
     select opt_id as entity_id,
@@ -46,7 +46,7 @@ INSERT INTO {destination_table}
           '{FEATURE_VERSION}' AS feature_version,
           no_of_same_modality_device_change as feature_value,
           current_timestamp AT TIME ZONE 'Asia/Kolkata' as timestamp,
-          cast(device_codes as Varchar) as comments
-        from tab1
+          cast(array_join(device_codes,',') as Varchar) as comments
+        from tab3
         where main_auth_type='P'
     

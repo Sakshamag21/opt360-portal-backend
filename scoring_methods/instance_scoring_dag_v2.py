@@ -1,3 +1,7 @@
+# v2: identical to instances_scoring_dag.py except dag_id/job_name, so
+# operator_dag_manager_v2.py's retry orchestration can trigger it in isolation
+# from the v1 pipeline. Same Spark scripts/S3 paths as v1 - only the Airflow
+# dag_id changes. See operator_dag_manager_v2.py for the retry logic.
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
@@ -13,16 +17,17 @@ from kubernetes.client import models as k8s
 import boto3
 
 from operator360.utils.pipeline_status import infer_category, wrap_shell_with_status_report, make_category_gate
+from operator360.utils.pipeline_status_v2 import make_idempotency_gate
 
-job_name = "instance_risk_scoring"
+job_name = "instance_risk_scoring_v2"
 desc = "Run all the instance_risk_scoring"
 signal_api_base_ip="10.10.116.60:8000"
 
-CEPH_ENDPOINT_URL = "http://10.10.103.12:425" 
+CEPH_ENDPOINT_URL = "http://10.10.103.12:425"
 CEPH_ACCESS_KEY = "9S0KLIQO7T2XCNGH4P4A"
 CEPH_SECRET_KEY = "XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4"
 CEPH_BUCKET_NAME = "prd-bi-data-platform-test"
-CEPH_CACHE_PREFIX = "cache/airflow/operator360" 
+CEPH_CACHE_PREFIX = "cache/airflow/operator360"
 
 custom_toleration = k8s.V1Toleration(
     key="strot",
@@ -131,7 +136,7 @@ FEATURES={
         "is_daily":True,
         "dependent_feature_id":''
     },
-    
+
     "sustxn_parallel_enrolment_score":{
         "feature_name":"sustxn_parallel_enrolment_score",
         "feature_version":2,
@@ -141,9 +146,9 @@ FEATURES={
         "is_daily":True,
         "dependent_feature_id":''
     },
-    
-    
-    
+
+
+
     "sustxn_res_namechange_score":{
         "feature_name":"sustxn_res_namechange_score",
         "feature_version":2,
@@ -172,7 +177,7 @@ FEATURES={
         "dependent_feature_id":''
     },
 
-    
+
     "work_multiple_optname_zscore":{
         "feature_name":"work_multiple_optname_zscore",
         "feature_version":2,
@@ -290,7 +295,7 @@ FEATURES={
         "is_daily":True,
         "dependent_feature_id":''
     },
-    
+
     "document_category_score":{
         "feature_name":"document_category_score",
         "feature_version":2,
@@ -326,7 +331,7 @@ default_args = {
     "owner": "airflow",
     "depends_on_past": False,
     "start_date": datetime(2026, 5, 12),
-    # "execution_timeout": timedelta(minutes=20),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -337,14 +342,15 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
-    schedule=None,  # triggered only by controller_pipeline
+    schedule="0 5 * * *",  # triggered only by controller_pipeline_v2
     catchup=False,
     max_active_runs=3,
     max_active_tasks=1,
-    tags=["Operator360","Instance Level Scoring"]
+    tags=["Operator360","Instance Level Scoring","v2"]
 ) as dag:
     tasks = {}
     category_gates = {}
+    idempotency_gates = {}  # key -> gate that skips this task if it already succeeded today
 
     for key, cfg in FEATURES.items():
         feature_category = infer_category(key)
@@ -377,10 +383,19 @@ with DAG(
         )
         tasks[key] = task
 
+        # A task should succeed at most once a day: if a same-day cascade
+        # re-triggers this DAG with an expanded valid_categories list, this
+        # skips any feature that already reported success for today's
+        # pipeline_run_id instead of re-running the Spark job and appending
+        # a duplicate score row for it.
+        idempotency_gate = make_idempotency_gate(f"gate_dup_{task_id}", dag_id=job_name, task_key=task_id)
+        idempotency_gates[key] = idempotency_gate
+        idempotency_gate >> task
+
         if feature_category:
             if feature_category not in category_gates:
                 category_gates[feature_category] = make_category_gate(f"gate_{feature_category}", feature_category)
-            category_gates[feature_category] >> task
+            category_gates[feature_category] >> idempotency_gate
 
         if cfg['signal_exists']:
             signal_task = PythonOperator(
@@ -397,8 +412,8 @@ with DAG(
         if "dependencies" in cfg and cfg["dependencies"]:
             for dep in cfg["dependencies"]:
                 if dep in tasks:
-                    tasks[dep] >> tasks[key]
-        
+                    tasks[dep] >> idempotency_gates[key]
+
         if "signal_exists" in cfg and cfg["signal_exists"]:
             if f"signals_{key}" in tasks:
                 tasks[key] >> tasks[f"signals_{key}"]
@@ -411,7 +426,7 @@ with DAG(
     for key, cfg in FEATURES.items():
         if "dependencies" in cfg and cfg["dependencies"]:
             tasks_with_dependencies.add(tasks[key])
-        
+
         # Mark signal tasks (they depend on their feature task)
         if cfg['signal_exists'] and f"signals_{key}" in tasks:
             tasks_with_dependencies.add(tasks[f"signals_{key}"])
@@ -420,8 +435,8 @@ with DAG(
     # for i in range(len(task_list) - 1):
     #     current_task = task_list[i]
     #     next_task = task_list[i + 1]
-        
+
     #     if next_task not in tasks_with_dependencies:
     #         next_task.trigger_rule = TriggerRule.ALL_DONE
-        
+
         # current_task >> next_task

@@ -1,3 +1,7 @@
+# v2: identical to document_multiple_feature_dag.py except dag_id/job_name,
+# so operator_dag_manager_v2.py's retry orchestration can trigger it in
+# isolation from the v1 pipeline. See operator_dag_manager_v2.py for the
+# retry logic.
 import logging
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -11,8 +15,9 @@ from operator360.signal_mechanism.signals_producer import get_signals_info, push
 from operator360.utils.raw_table_validation import get_source_tables, check_raw_tables
 from operator360.utils.s3_audit_logger import audit_to_s3
 from operator360.utils.pipeline_status import report_status, parse_bool
+from operator360.utils.pipeline_status_v2 import skip_if_already_succeeded
 
-job_name = "document_features_combined"
+job_name = "document_features_combined_v2"
 category = "document"
 desc = "Run all the  Document Features"
 signal_api_base_ip = "10.10.116.60:8000"
@@ -90,24 +95,24 @@ FEATURES = {
         "signal_exists":False,
         "is_daily":True
     },
-    "doc_qc_error_pop_incidents_count_cumulative": {
-        "feature_name": "doc_qc_error_pop_incidents_count_cumulative",
-        "feature_version": 1,
-        "feature_id":"doc_qc_error_pop_incidents_count_cumulative_v1",
-        "sql_local_path": "/opt/airflow/dags/operator360/document_qc_combined/qc_cumulative_daily_feature.sql",
-        "dependencies":["doc_qc_error_pop_incidents_count_daily"],
-        "signal_exists":False,
-        "is_daily":True
-    },
-    "doc_qc_error_doe1_incidents_count_cumulative": {
-        "feature_name": "doc_qc_error_doe1_incidents_count_cumulative",
-        "feature_version": 1,
-        "feature_id":"doc_qc_error_doe1_incidents_count_cumulative_v1",
-        "sql_local_path": "/opt/airflow/dags/operator360/document_qc_combined/qc_cumulative_daily_feature.sql",
-        "dependencies":["doc_qc_error_doe1_incidents_count_daily"],
-        "signal_exists":False,
-        "is_daily":True
-    },
+    # "doc_qc_error_pop_incidents_count_cumulative": {
+    #     "feature_name": "doc_qc_error_pop_incidents_count_cumulative",
+    #     "feature_version": 1,
+    #     "feature_id":"doc_qc_error_pop_incidents_count_cumulative_v1",
+    #     "sql_local_path": "/opt/airflow/dags/operator360/document_qc_combined/qc_cumulative_daily_feature.sql",
+    #     "dependencies":["doc_qc_error_pop_incidents_count_daily"],
+    #     "signal_exists":False,
+    #     "is_daily":True
+    # },
+    # "doc_qc_error_doe1_incidents_count_cumulative": {
+    #     "feature_name": "doc_qc_error_doe1_incidents_count_cumulative",
+    #     "feature_version": 1,
+    #     "feature_id":"doc_qc_error_doe1_incidents_count_cumulative_v1",
+    #     "sql_local_path": "/opt/airflow/dags/operator360/document_qc_combined/qc_cumulative_daily_feature.sql",
+    #     "dependencies":["doc_qc_error_doe1_incidents_count_daily"],
+    #     "signal_exists":False,
+    #     "is_daily":True
+    # },
     "doc_qc_error_al_incidents_count_monthly": {
         "feature_name": "doc_qc_error_al_incidents_count_monthly",
         "feature_version": 1,
@@ -182,6 +187,7 @@ def run_signals(feature_id):
     except Exception as e:
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
+@skip_if_already_succeeded(dag_id=job_name)
 @audit_to_s3(dag_id=job_name)
 @report_status(dag_id=job_name, category=category)
 def run_single_features(feature_name, feature_version,feature_id,  sql_file, end_date, is_daily=False, data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
@@ -198,14 +204,14 @@ def run_single_features(feature_name, feature_version,feature_id,  sql_file, end
         logger.info("Verifying raw data availability for feature_id: %s", feature_id)
 
         source_tables_res = get_source_tables(category="doc")
-        
+
         if not source_tables_res.get('success'):
             logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
             raise AirflowSkipException("Skipped because metadata DB lookup failed.")
-            
-        mapping = source_tables_res 
+
+        mapping = source_tables_res
         source_table = mapping.get(feature_id)
-        
+
         if not source_table:
             logger.warning("No source_table found in metadata for feature_id=%s. Proceeding with feature run anyway.", feature_id)
         else:
@@ -213,8 +219,8 @@ def run_single_features(feature_name, feature_version,feature_id,  sql_file, end
             if not has_raw_data:
                 logger.warning("Skipping feature %s because raw table %s has no data for yesterday.", feature_name, source_table)
                 raise AirflowSkipException(f"Skipping task because raw data is missing for {source_table}")
-    
-    
+
+
     print(f"Executing feature {feature_name}")
     try:
         logger.info("Running feature %s v%s with sql=%s, end_date=%s",
@@ -235,7 +241,7 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 4, 13, tzinfo=ZoneInfo("Asia/Kolkata")),
-    # "execution_timeout": timedelta(minutes=20),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -253,7 +259,7 @@ with DAG(
     catchup=False,
     max_active_runs=3,
     max_active_tasks=10,  # FIX: increase to allow parallelism
-    tags=["Operator360", "Document Category"],
+    tags=["Operator360", "Document Category", "v2"],
     params={"business_consumer": "Operator360"},
 ) as dag:
 

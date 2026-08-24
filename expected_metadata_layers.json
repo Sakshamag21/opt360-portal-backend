@@ -1,33 +1,24 @@
 {
-    "layer1":{
-        
-        "dags":["auth_category_features",
-                "bio_packet_fraud_features",
-                "document_features_combined",
-                "hardware_category_features",
-                "work_category_features",
-                "sustxn_category_feature"],
-        "expected_output_layer1":{
-            dag success or failed
-        }
-        },
-    "layer2":{
-        "dags":["instance_scoring_dag"]
-        "input":"output from layer 1",
-        "expected_output_layer2":{
-            each catgeory scoring success or failed
-        }
+    "_comment": "Static reference doc only - not read at runtime. The manager (operator_dag_manager.py) uses the Python constants in operator360/utils/pipeline_status.py as the source of truth.",
+    "layer1": {
+        "dags": [
+            "auth_category_features",
+            "bio_packet_fraud_features",
+            "document_features_combined",
+            "hardware_category_features",
+            "sustxn_category_feature",
+            "work_category_feature"
+        ],
+        "expected_output": "per-category valid/invalid verdict, computed from each feature task's S3-reported status (all non-skipped features must succeed)"
     },
-
-    "layer3":{
-        "dags":['ctageory_scoring_dag']
-        "input":"output from layer 2",
-        "expected_output_layer3":{
-            success or failed
-        }
-
+    "layer2": {
+        "dags": ["instance_risk_scoring"],
+        "input": "valid_categories from layer1",
+        "expected_output": "per-category valid/invalid verdict, intersected with layer1's valid_categories"
+    },
+    "layer3": {
+        "dags": ["combined_risk_scoring"],
+        "input": "valid_categories from layer2",
+        "expected_output": "category risk scores for valid categories, plus a final risk_score only if all 5 category scores ran"
     }
-
-
-    
 }

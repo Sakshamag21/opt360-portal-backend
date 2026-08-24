@@ -61,7 +61,7 @@ with DAG(
     dag_id='operator_automated_suspension',
     default_args=default_args,
     description='DAG to send Kafka messages for suspension of the operator',
-    schedule=None,
+    schedule="0 17 * * *",
     catchup=False,
     max_active_tasks=1,
     tags=['operator360', 'suspension']
@@ -235,28 +235,74 @@ with DAG(
                 caseDetails=case_details
             )
 
-    def main():
+    def main(poll_timeout_ms: int = 2000, max_idle_polls: int = 5, max_run_seconds: int = 3600):
         producer = KafkaProducer(bootstrap_servers=producer_brokers)
-        consumer = KafkaConsumer(input_topic, group_id='opt360.suspension', bootstrap_servers=consumer_brokers, auto_offset_reset='latest')
+        consumer = KafkaConsumer(
+            input_topic, 
+            group_id='opt360.suspension', 
+            bootstrap_servers=consumer_brokers, 
+            auto_offset_reset='latest',
+            enable_auto_commit=False,      # Commit manually after processing
+            max_poll_records=500           # Process up to 500 messages per poll
+        )
         
-        for message in consumer:
+        idle_poll_count = 0
+        start_time = time.time()
+        total_processed = 0
+        
+        logging.info("Starting daily Kafka scan...")
+
+        try:
+            # Keep looping until we hit max idle polls or hard time limit (1 hour)
+            while idle_poll_count < max_idle_polls and (time.time() - start_time) < max_run_seconds:
+                records = consumer.poll(timeout_ms=poll_timeout_ms, max_records=500)
+                
+                if not records:
+                    idle_poll_count += 1
+                    continue
+                
+                # Reset idle counter because we found messages
+                idle_poll_count = 0 
+                
+                for tp_partition, messages in records.items():
+                    for message in messages:
+                        try:
+                            raw = message.value.decode('utf-8')
+                            logging.info(f"Received message: {raw}")
+                            message_data = json.loads(raw)['data']
+                            output_message = process_message(message_data)
+                            
+                            if output_message is not None and isinstance(output_message, str):
+                                producer.send(output_topic, output_message.encode('utf-8'))
+                            elif output_message is not None:
+                                producer.send(output_topic, json.dumps(output_message).encode('utf-8'))
+                            
+                            total_processed += 1
+                        except json.JSONDecodeError as e:
+                            logging.error(f"Error decoding JSON: {e}")
+                        except KeyError as e:
+                            logging.error(f"Missing key in message: {e}")
+                        except Exception as e:
+                            logging.error(f"Error processing message: {e}")
+
+                # Commit offsets after successfully processing the batch
+                producer.flush()
+                consumer.commit()
+                logging.info(f"Processed batch. Total processed so far: {total_processed}")
+                
+            logging.info(f"Daily scan complete. Total messages processed: {total_processed}. Exiting task.")
+
+        except Exception as e:
+            logging.error(f"Fatal error in main loop: {e}")
+        finally:
+            # Always close connections
             try:
-                logging.info(f"Received message: {message.value.decode('utf-8')}")
-                message_data = json.loads(message.value.decode('utf-8'))['data']
-                output_message = process_message(message_data)
-                
-                if output_message is not None and isinstance(output_message, str):
-                    producer.send(output_topic, output_message.encode('utf-8'))
-                elif output_message is not None:
-                    producer.send(output_topic, json.dumps(output_message).encode('utf-8'))
-                
-                logging.info(f"Sent message to {output_topic}")
-            except json.JSONDecodeError as e:
-                logging.error(f"Error decoding JSON: {e}")
-            except KeyError as e:
-                logging.error(f"Missing key in message: {e}")
-            except Exception as e:
-                logging.error(f"Error processing message: {e}")
+                consumer.commit()
+            except Exception:
+                pass
+            consumer.close()
+            producer.flush()
+            producer.close()
 
     def get_user_status(opt_id: str = None):
         try:

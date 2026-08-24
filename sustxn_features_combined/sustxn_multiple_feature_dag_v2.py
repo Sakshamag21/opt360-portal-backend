@@ -1,3 +1,6 @@
+# v2: identical to sustxn_multiple_feature_dag.py except dag_id/job_name, so
+# operator_dag_manager_v2.py's retry orchestration can trigger it in isolation
+# from the v1 pipeline. See operator_dag_manager_v2.py for the retry logic.
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
@@ -11,8 +14,9 @@ from airflow.utils.trigger_rule import TriggerRule
 from zoneinfo import ZoneInfo
 from operator360.utils.s3_audit_logger import audit_to_s3
 from operator360.utils.pipeline_status import report_status, parse_bool
+from operator360.utils.pipeline_status_v2 import skip_if_already_succeeded
 
-job_name = "sustxn_category_feature"
+job_name = "sustxn_category_feature_v2"
 category = "sustxn"
 desc = "Run all the  Sustxn Features"
 signal_api_base_ip = "10.10.116.60:8000"
@@ -101,6 +105,7 @@ def run_signals(feature_id):
     except Exception as e:
         print(f"Error in generating signal for feature id : {feature_id}, error: {e}")
 
+@skip_if_already_succeeded(dag_id=job_name)
 @audit_to_s3(dag_id=job_name)
 @report_status(dag_id=job_name, category=category)
 def run_single_features(feature_name, feature_version, feature_id, sql_file, end_date, frequency="daily", data_interval_start=None, pipeline_run_id=None, is_daily_run=None, log_url=None, try_number=None):
@@ -148,17 +153,17 @@ def run_single_features(feature_name, feature_version, feature_id, sql_file, end
     # tick) or daily/weekly features on the promotion tick.
     # ==========================================
     logger.info("Verifying raw data availability for feature_id: %s", feature_id)
-    
+
     if feature_id:
         source_tables_res = get_source_tables(category="sustxn")
-        
+
         if not source_tables_res.get('success'):
             logger.error("Failed to fetch source tables metadata. Error: %s", source_tables_res.get('error'))
             raise RuntimeError(f"Metadata DB lookup failed. Error: {source_tables_res.get('error')}")
-            
-        mapping = source_tables_res 
+
+        mapping = source_tables_res
         source_table = mapping.get(feature_id)
-        
+
         if not source_table:
             logger.warning("No source_table found in metadata for feature_id=%s. Proceeding with feature run anyway.", feature_id)
         else:
@@ -188,7 +193,7 @@ default_args = {
     "owner": "Saksham Agarwal",
     "depends_on_past": False,
     "start_date": datetime(2026, 5, 20, tzinfo=ZoneInfo("Asia/Kolkata")),
-    # "execution_timeout": timedelta(minutes=20),
+    "execution_timeout": timedelta(minutes=20),
     "email": ["techexe16.yp25@uidai.net.in"],
     "email_on_failure": True,
     "email_on_retry": True,
@@ -199,11 +204,11 @@ with DAG(
     dag_id=job_name,
     default_args=default_args,
     description=desc,
-    schedule=None,  # triggered only by controller_pipeline
+    schedule=None,  # triggered only by controller_pipeline_v2
     catchup=False,
     max_active_runs=3,
     max_active_tasks=5,
-    tags=["Operator360", "Sustxn Category"]
+    tags=["Operator360", "Sustxn Category", "v2"]
 ) as dag:
 
     tasks = {}
@@ -244,7 +249,7 @@ with DAG(
             for dep in cfg["dependencies"]:
                 if dep in tasks:
                     tasks[dep] >> tasks[cfg['feature_id']]
-        
+
         if "signal_exists" in cfg and cfg["signal_exists"]:
             if f"signals_{cfg['feature_id']}" in tasks:
                 tasks[cfg['feature_id']] >> tasks[f"signals_{cfg['feature_id']}"]
@@ -258,7 +263,7 @@ with DAG(
         # Mark feature tasks that have explicit dependencies
         if "dependencies" in cfg and cfg["dependencies"]:
             tasks_with_dependencies.add(tasks[cfg['feature_id']])
-        
+
         # Mark signal tasks (they depend on their feature task)
         if cfg['signal_exists'] and f"signals_{key}" in tasks:
             tasks_with_dependencies.add(tasks[f"signals_{cfg['feature_id']}"])
@@ -267,10 +272,10 @@ with DAG(
     for i in range(len(task_list) - 1):
         current_task = task_list[i]
         next_task = task_list[i + 1]
-        
+
         # If next_task doesn't have explicit dependencies, use ALL_DONE trigger
         # This allows it to run even if the previous unrelated task failed
         if next_task not in tasks_with_dependencies:
             next_task.trigger_rule = TriggerRule.ALL_DONE
-        
+
         current_task >> next_task
