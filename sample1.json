@@ -1,0 +1,623 @@
+{
+    "operator_id": "RJ_BS_0516_NS840343",
+    "ro_name": "Delhi",
+    "overall_risk_score": 0,
+    "last_packet_timestamp": "2026-09-27 09:44:07",
+    "risk_analysis_updated_at": "2026-09-26 10:30:33",
+    "risk_driver": {
+        "rule": "max_category",
+        "category_ids": [
+            "biometrics"
+        ]
+    },
+    "data_health": [
+        {
+            "type": "overall_score_mismatch",
+            "category_ids": [],
+            "message": "Overall risk score 0.00 differs from the highest category score 0.98."
+        },
+        {
+            "type": "no_evidence_served",
+            "category_ids": [
+                "biometrics",
+                "work",
+                "authentication",
+                "suspicious",
+                "hardware",
+                "document"
+            ],
+            "message": "Biometrics, Work, Authentication, Suspicious, Hardware and Document have no scoring inputs in the serving layer, so the score can't be explained."
+        },
+        {
+            "type": "signal_not_in_registry",
+            "category_ids": [
+                "authentication"
+            ],
+            "message": "auth_txn_failure_gap_score_v2 is weighted in Authentication but has no PROD entry in the feature registry."
+        },
+        {
+            "type": "signal_not_in_registry",
+            "category_ids": [
+                "hardware"
+            ],
+            "message": "hardware_machine_change_score_v2 is weighted in Hardware but has no PROD entry in the feature registry."
+        }
+    ],
+    "categories": [
+        {
+            "category_id": "biometrics",
+            "category_name": "Biometrics Category",
+            "category_score": 0.98,
+            "is_driver": true,
+            "status": "no_evidence",
+            "method_text": "Weighted blend of the signals below that leans toward the strongest one. Signals with higher influence count more.",
+            "signals": [
+                {
+                    "signal_id": "bio_mfc_fraud_score_v2",
+                    "name": "Manual biometric fraud",
+                    "checks": "Packets flagged for finger, iris or face swap, mixing, non-human capture or proof-of-presence issues, ranked against all operators.",
+                    "window": "",
+                    "weight": 4,
+                    "total_weight": 5,
+                    "influence": "high",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "bio_sfc_fraud_score_v2",
+                    "name": "Systematic fraud stage",
+                    "checks": "Non-systematic packets made while the operator was in a systematic-fraud stage.",
+                    "window": "Cumulative · compared with all operators",
+                    "weight": 1,
+                    "total_weight": 5,
+                    "influence": "low",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                }
+            ],
+            "other_activity": [
+                {
+                    "feature_id": "bio_packet_fraud_count_daily_v1",
+                    "label": "Biometric fraud packets",
+                    "value": 21,
+                    "last_updated": "2026-08-19T01:46:30+05:30"
+                },
+                {
+                    "feature_id": "bio_packet_slap_right_fraud_count_daily_v1",
+                    "label": "Right-slap fraud packets",
+                    "value": 21,
+                    "last_updated": "2026-08-19T01:45:20+05:30"
+                },
+                {
+                    "feature_id": "bio_packet_slap_right_swap_count_daily_v1",
+                    "label": "Right-slap swap packets",
+                    "value": 16,
+                    "last_updated": "2026-08-19T01:45:01+05:30"
+                },
+                {
+                    "feature_id": "bio_packet_finger_fraud_count_daily_v1",
+                    "label": "Finger fraud packets",
+                    "value": 21,
+                    "last_updated": "2026-08-19T01:44:45+05:30"
+                },
+                {
+                    "feature_id": "bio_packet_finger_swap_count_daily_v1",
+                    "label": "Finger-swap packets",
+                    "value": 16,
+                    "last_updated": "2026-08-19T01:44:34+05:30"
+                }
+            ]
+        },
+        {
+            "category_id": "work",
+            "category_name": "Work Category",
+            "category_score": 0.45,
+            "is_driver": false,
+            "status": "no_evidence",
+            "method_text": "Weighted blend of the signals below that leans toward the strongest one. Signals with higher influence count more.",
+            "signals": [
+                {
+                    "signal_id": "work_machine_change_score_v2",
+                    "name": "Machines used",
+                    "checks": "Number of different machines the operator has worked on.",
+                    "window": "Last 90 days · compared with all operators",
+                    "weight": 4,
+                    "total_weight": 16,
+                    "influence": "high",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "work_multiple_optname_score_v2",
+                    "name": "Multiple operator names",
+                    "checks": "Distinct names the operator has used.",
+                    "window": "Since 2020 · compared with all operators",
+                    "weight": 4,
+                    "total_weight": 16,
+                    "influence": "high",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "work_opt_hof_score_v2",
+                    "name": "Marked as head of family",
+                    "checks": "Residents for whom the operator is recorded as head of family.",
+                    "window": "Since 2020 · compared with all operators",
+                    "weight": 4,
+                    "total_weight": 16,
+                    "influence": "high",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "work_opt_machinesync_score_v2",
+                    "name": "Machine sync gaps",
+                    "checks": "Packets created while the operator's machine was not syncing.",
+                    "window": "",
+                    "weight": 2,
+                    "total_weight": 16,
+                    "influence": "medium",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "work_pob_declared_score_v2",
+                    "name": "Proof of birth declared",
+                    "checks": "Packets where the operator declared a resident's proof of birth.",
+                    "window": "Last 365 days · compared with all operators",
+                    "weight": 2,
+                    "total_weight": 16,
+                    "influence": "medium",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                }
+            ],
+            "other_activity": [
+                {
+                    "feature_id": "work_pob_declared_instances_v1",
+                    "label": "Proof-of-birth declarations",
+                    "value": 1,
+                    "last_updated": "2026-09-23T23:44:39+05:30"
+                },
+                {
+                    "feature_id": "work_machine_change_instances_24h_v1",
+                    "label": "Machine changes (24h)",
+                    "value": 1,
+                    "last_updated": "2026-09-23T23:44:39+05:30"
+                },
+                {
+                    "feature_id": "work_machineip_isp_change_count_cumulative_v1",
+                    "label": "ISP switches (all time)",
+                    "value": 4,
+                    "last_updated": "2026-09-23T23:10:41+05:30"
+                },
+                {
+                    "feature_id": "work_machineip_isp_change_count_daily_v1",
+                    "label": "ISP switches (day)",
+                    "value": 4,
+                    "last_updated": "2026-09-23T23:10:41+05:30"
+                },
+                {
+                    "feature_id": "work_packet_upload_update_count_daily_v1",
+                    "label": "Update packets",
+                    "value": 4,
+                    "last_updated": "2026-09-23T23:10:41+05:30"
+                },
+                {
+                    "feature_id": "work_packet_upload_total_count_daily_v1",
+                    "label": "Packets uploaded",
+                    "value": 4,
+                    "last_updated": "2026-09-23T22:11:43+05:30"
+                },
+                {
+                    "feature_id": "work_machine_unique_count_daily_v1",
+                    "label": "Unique machines (day)",
+                    "value": 4,
+                    "last_updated": "2026-09-23T22:11:43+05:30"
+                },
+                {
+                    "feature_id": "work_machine_ip_change_instances_count_daily_v1",
+                    "label": "Machine IP changes",
+                    "value": 4,
+                    "last_updated": "2026-09-23T22:11:43+05:30"
+                },
+                {
+                    "feature_id": "work_packet_upload_new_count_daily_v1",
+                    "label": "New enrolment packets",
+                    "value": 4,
+                    "last_updated": "2026-09-23T22:11:43+05:30"
+                },
+                {
+                    "feature_id": "work_operator_name_unique_count_cumulative_v1",
+                    "label": "Unique names used",
+                    "value": 1,
+                    "last_updated": "2026-09-19T12:07:24+05:30"
+                }
+            ]
+        },
+        {
+            "category_id": "authentication",
+            "category_name": "Authentication Category",
+            "category_score": 0.38,
+            "is_driver": false,
+            "status": "no_evidence",
+            "method_text": "Weighted blend of the signals below that leans toward the strongest one. All 5 signals count equally.",
+            "signals": [
+                {
+                    "signal_id": "auth_device_change_score_v2",
+                    "name": "Device or modality changes",
+                    "checks": "Times the operator switched authentication device or modality (finger, iris, face).",
+                    "window": "",
+                    "weight": 1,
+                    "total_weight": 5,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "auth_failure_ratio_score_v2",
+                    "name": "Authentication failure ratio",
+                    "checks": "Share of the operator's authentications that failed, corrected for low volume.",
+                    "window": "",
+                    "weight": 1,
+                    "total_weight": 5,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "auth_liveness_failure_streak_score_v2",
+                    "name": "Liveness failure streak",
+                    "checks": "Consecutive liveness failures, with recent failures weighted more.",
+                    "window": "",
+                    "weight": 1,
+                    "total_weight": 5,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "auth_oddhour_txn_score_v2",
+                    "name": "Odd-hour authentication",
+                    "checks": "Authentications between 10 pm and 6 am.",
+                    "window": "",
+                    "weight": 1,
+                    "total_weight": 5,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "auth_txn_failure_gap_score_v2",
+                    "name": "Gap between failures",
+                    "checks": "Average time between failed authentications.",
+                    "window": "Last 7 days",
+                    "weight": 1,
+                    "total_weight": 5,
+                    "influence": "equal",
+                    "in_registry": false,
+                    "evidence": [],
+                    "missing_inputs": []
+                }
+            ],
+            "other_activity": [
+                {
+                    "feature_id": "auth_liveness_failure_incidents_count_cumulative_90d_v1",
+                    "label": "Auth liveness failure incidents count cumulative 90d",
+                    "value": 2,
+                    "last_updated": "2026-09-17T23:49:19+05:30"
+                },
+                {
+                    "feature_id": "auth_modality_change_incidents_24h_v1",
+                    "label": "Modality switches",
+                    "value": 2,
+                    "last_updated": "2026-09-17T23:49:19+05:30"
+                },
+                {
+                    "feature_id": "auth_liveness_failure_incidents_24h_v2",
+                    "label": "Liveness failures",
+                    "value": 2,
+                    "last_updated": "2026-09-17T23:49:19+05:30"
+                },
+                {
+                    "feature_id": "auth_biomismatch_incidents_count_cumulative_90d_v1",
+                    "label": "Auth biomismatch incidents count cumulative 90d",
+                    "value": 2,
+                    "last_updated": "2026-09-17T23:49:19+05:30"
+                },
+                {
+                    "feature_id": "auth_oddhour_incidents_count_cumulative_90d_v1",
+                    "label": "Auth oddhour incidents count cumulative 90d",
+                    "value": 2,
+                    "last_updated": "2026-09-17T23:49:19+05:30"
+                },
+                {
+                    "feature_id": "auth_modality_change_incidents_count_cumulative_90d_v1",
+                    "label": "Auth modality change incidents count cumulative 90d",
+                    "value": 2,
+                    "last_updated": "2026-09-17T23:49:19+05:30"
+                },
+                {
+                    "feature_id": "auth_biomismatch_incidents_24h_v1",
+                    "label": "Biometric mismatches",
+                    "value": 2,
+                    "last_updated": "2026-09-13T16:05:53+05:30"
+                },
+                {
+                    "feature_id": "auth_oddhour_incidents_24h_v1",
+                    "label": "Odd-hour authentications",
+                    "value": 2,
+                    "last_updated": "2026-09-13T16:05:53+05:30"
+                },
+                {
+                    "feature_id": "auth_liveness_failure_incidents_24h_v1",
+                    "label": "Auth liveness failure incidents 24h",
+                    "value": 2,
+                    "last_updated": "2026-09-11T07:45:22+05:30"
+                },
+                {
+                    "feature_id": "auth_device_change_incidents_v1",
+                    "label": "Device changes",
+                    "value": 2,
+                    "last_updated": "2026-09-11T07:45:22+05:30"
+                }
+            ]
+        },
+        {
+            "category_id": "suspicious",
+            "category_name": "Suspicious Category",
+            "category_score": 0.1,
+            "is_driver": false,
+            "status": "no_evidence",
+            "method_text": "Weighted blend of the signals below that leans toward the strongest one. All 4 signals count equally.",
+            "signals": [
+                {
+                    "signal_id": "sustxn_oddhour_pkts_score_v2",
+                    "name": "Packets outside working hours",
+                    "checks": "Packets made after the declared working hours.",
+                    "window": "",
+                    "weight": 2,
+                    "total_weight": 8,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "sustxn_outstate_pkts_score_v2",
+                    "name": "Out-of-state packets",
+                    "checks": "Packets for residents from a different state than the operator.",
+                    "window": "",
+                    "weight": 2,
+                    "total_weight": 8,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "sustxn_res_mobilechange_score_v2",
+                    "name": "Resident mobile changes",
+                    "checks": "Mobile number changes per resident.",
+                    "window": "Since 2020 · compared with all operators",
+                    "weight": 2,
+                    "total_weight": 8,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "sustxn_res_namechange_score_v2",
+                    "name": "Resident name changes",
+                    "checks": "Name changes for the same resident.",
+                    "window": "Since 2020 · compared with all operators",
+                    "weight": 2,
+                    "total_weight": 8,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                }
+            ],
+            "other_activity": [
+                {
+                    "feature_id": "sustxn_outstate_pkts_instances_24h_v2",
+                    "label": "Out-of-state packets",
+                    "value": 3,
+                    "last_updated": "2026-09-27T12:56:01+05:30"
+                },
+                {
+                    "feature_id": "sustxn_res_mobilechange_instances_count_cumulative_v2",
+                    "label": "Resident mobile changes",
+                    "value": 3,
+                    "last_updated": "2026-09-27T12:56:01+05:30"
+                },
+                {
+                    "feature_id": "sustxn_res_namechange_instances_count_cumulative_v2",
+                    "label": "Resident name changes",
+                    "value": 3,
+                    "last_updated": "2026-09-27T12:56:01+05:30"
+                },
+                {
+                    "feature_id": "sustxn_outstate_pkts_cumulative_90d_v1",
+                    "label": "Sustxn outstate pkts cumulative 90d",
+                    "value": 3,
+                    "last_updated": "2026-09-27T12:56:01+05:30"
+                },
+                {
+                    "feature_id": "sustxn_oddhour_pkts_cumulative_90d_v1",
+                    "label": "Sustxn oddhour pkts cumulative 90d",
+                    "value": 3,
+                    "last_updated": "2026-09-26T13:20:56+05:30"
+                },
+                {
+                    "feature_id": "sustxn_parallel_enrolment_count_cumulative_90d_v1",
+                    "label": "Sustxn parallel enrolment count cumulative 90d",
+                    "value": 3,
+                    "last_updated": "2026-09-26T13:20:56+05:30"
+                },
+                {
+                    "feature_id": "sustxn_oddhour_pkts_instances_24h_v3",
+                    "label": "Sustxn oddhour pkts instances 24h",
+                    "value": 3,
+                    "last_updated": "2026-09-26T13:20:56+05:30"
+                },
+                {
+                    "feature_id": "sustxn_parallel_enrolment_eid_count_daily_v1",
+                    "label": "Parallel enrolments",
+                    "value": 3,
+                    "last_updated": "2026-09-20T05:30:00+05:30"
+                },
+                {
+                    "feature_id": "sustxn_oddhour_pkts_instances_24h_v2",
+                    "label": "Odd-hour packets",
+                    "value": 1,
+                    "last_updated": "2026-09-18T00:53:06+05:30"
+                },
+                {
+                    "feature_id": "sustxn_oddhour_pkts_instances_24h_v1",
+                    "label": "Odd-hour packets (v1, deprecated)",
+                    "value": 2,
+                    "last_updated": "2026-09-15T16:24:08+05:30"
+                },
+                {
+                    "feature_id": "sustxn_outstate_pkts_instances_24h_v1",
+                    "label": "Sustxn outstate pkts instances 24h",
+                    "value": 3,
+                    "last_updated": "2026-08-20T22:40:21+05:30"
+                }
+            ]
+        },
+        {
+            "category_id": "hardware",
+            "category_name": "Hardware Category",
+            "category_score": 0,
+            "is_driver": false,
+            "status": "no_evidence",
+            "method_text": "Weighted blend of the signals below that leans toward the strongest one. All 2 signals count equally.",
+            "signals": [
+                {
+                    "signal_id": "hardware_machine_change_score_v2",
+                    "name": "Machine signature changes",
+                    "checks": "Packets made on a machine whose signature changed.",
+                    "window": "",
+                    "weight": 4,
+                    "total_weight": 8,
+                    "influence": "equal",
+                    "in_registry": false,
+                    "evidence": [],
+                    "missing_inputs": []
+                },
+                {
+                    "signal_id": "hardware_multiple_biodev_score_v2",
+                    "name": "Multiple biometric devices",
+                    "checks": "Number of biometric devices the operator used.",
+                    "window": "",
+                    "weight": 4,
+                    "total_weight": 8,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                }
+            ],
+            "other_activity": []
+        },
+        {
+            "category_id": "document",
+            "category_name": "Document Category",
+            "category_score": 0,
+            "is_driver": false,
+            "status": "no_evidence",
+            "method_text": "",
+            "signals": [
+                {
+                    "signal_id": "document_category_score_v2",
+                    "name": "QC errors on documents",
+                    "checks": "QC verdicts on proof-of-presence (PoP) and date-of-entry (DOE1) documents.",
+                    "window": "",
+                    "weight": 1,
+                    "total_weight": 1,
+                    "influence": "equal",
+                    "in_registry": true,
+                    "evidence": [],
+                    "missing_inputs": []
+                }
+            ],
+            "other_activity": [
+                {
+                    "feature_id": "doc_qc_error_doe1_incidents_count_cumulative_90d_v1",
+                    "label": "Doc qc error doe1 incidents count cumulative 90d",
+                    "value": 5,
+                    "last_updated": "2026-09-27T12:56:38+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_pop_incidents_count_cumulative_90d_v1",
+                    "label": "Doc qc error pop incidents count cumulative 90d",
+                    "value": 5,
+                    "last_updated": "2026-09-26T17:40:50+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_incidents_count_cumulative_90d_v1",
+                    "label": "Doc qc error incidents count cumulative 90d",
+                    "value": 5,
+                    "last_updated": "2026-09-26T17:40:50+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_be_incidents_count_daily_v1",
+                    "label": "Doc qc error be incidents count daily",
+                    "value": 5,
+                    "last_updated": "2026-09-26T17:40:50+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_al_incidents_count_daily_v1",
+                    "label": "Doc qc error al incidents count daily",
+                    "value": 4,
+                    "last_updated": "2026-09-26T11:55:00+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_incidents_count_daily_v1",
+                    "label": "Doc qc error incidents count daily",
+                    "value": 4,
+                    "last_updated": "2026-09-26T11:55:00+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_de_incidents_count_daily_v1",
+                    "label": "Doc qc error de incidents count daily",
+                    "value": 4,
+                    "last_updated": "2026-09-26T11:55:00+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_pop_incidents_count_daily_v1",
+                    "label": "PoP QC errors",
+                    "value": 4,
+                    "last_updated": "2026-09-26T11:55:00+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_doe1_incidents_count_daily_v1",
+                    "label": "DOE1 QC errors",
+                    "value": 1,
+                    "last_updated": "2026-09-25T12:10:11+05:30"
+                },
+                {
+                    "feature_id": "doc_qc_error_doe2_incidents_count_daily_v1",
+                    "label": "Doc qc error doe2 incidents count daily",
+                    "value": 1,
+                    "last_updated": "2026-09-25T12:04:48+05:30"
+                }
+            ]
+        }
+    ]
+}
