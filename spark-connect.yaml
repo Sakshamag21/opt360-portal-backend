@@ -1,0 +1,258 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-connect
+  namespace: strot-spark
+  labels:
+    app: spark-connect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-connect
+  template:
+    metadata:
+      labels:
+        app: spark-connect
+        spark-role: driver
+      annotations:
+        # 1. Tell Prometheus to scrape this pod
+        prometheus.io/scrape: "true"
+        # 2. Tell Prometheus to scrape on port 9090 (the sidecar)
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: strot-service-account
+      securityContext:
+        fsGroup: 185
+        fsGroupChangePolicy: "OnRootMismatch"
+      containers:
+      # --- Main Spark Connect Container ---
+      - name: spark-connect-server
+        image: "hbdc-harbor-registry-prod.uidai.net.in/data-platform/pyspark-duckdb-sqlmesh:4.0.2_0.235.4_4-RELEASE"
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            /opt/spark/bin/spark-submit \
+            --class org.apache.spark.sql.connect.service.SparkConnectServer \
+            --master k8s://https://10.10.102.220:443 \
+            --deploy-mode client \
+            --name spark-connect-server \
+            \
+            --conf spark.kubernetes.namespace=strot-spark \
+            --conf spark.kubernetes.authenticate.driver.serviceAccountName=strot-service-account \
+            --conf spark.kubernetes.driver.pod.name=${MY_POD_NAME} \
+            --conf spark.kubernetes.container.image=hbdc-harbor-registry-prod.uidai.net.in/data-platform/pyspark-duckdb-sqlmesh:4.0.2_0.235.4_4-RELEASE \
+            --conf spark.kubernetes.container.image.pullPolicy=IfNotPresent \
+            \
+            --conf spark.driver.host=${MY_POD_IP} \
+            --conf spark.driver.port=7078 \
+            --conf spark.driver.blockManager.port=7079 \
+            --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
+            \
+            --conf spark.driver.cores=2 \
+            --conf spark.driver.memory=8g \
+            --conf spark.driver.memoryOverhead=2g \
+            --conf spark.driver.maxResultSize=2g \
+            \
+            --conf spark.executor.cores=4 \
+            --conf spark.executor.memory=16g \
+            --conf spark.executor.memoryOverhead=16g \
+            --conf spark.kubernetes.executor.request.cores=4 \
+            --conf spark.kubernetes.executor.limit.cores=4 \
+            --conf spark.kubernetes.executor.limit.memory=32g \
+            --conf spark.scheduler.mode=FAIR \
+            \
+            --conf spark.driver.extraJavaOptions="-XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:G1HeapRegionSize=32m -XX:+G1SummarizeConcMark -XX:InitiatingHeapOccupancyPercent=35 -XX:OnOutOfMemoryError='echo \"OutOfMemoryError occurred\"'" \
+            --conf spark.executor.extraJavaOptions="-XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:G1HeapRegionSize=32m -XX:+G1SummarizeConcMark -XX:InitiatingHeapOccupancyPercent=35 -XX:OnOutOfMemoryError='echo \"OutOfMemoryError occurred\"'" \
+            \
+            --conf spark.plugins=io.dataflint.spark.SparkDataflintPlugin \
+            --conf spark.dynamicAllocation.enabled=true \
+            --conf spark.dynamicAllocation.minExecutors=40 \
+            --conf spark.dynamicAllocation.maxExecutors=40 \
+            --conf spark.dynamicAllocation.initialExecutors=40 \
+            --conf spark.dynamicAllocation.executorIdleTimeout=480s \
+            --conf spark.dynamicAllocation.shuffleTracking.enabled=true \
+            \
+            --conf spark.hadoop.fs.s3a.endpoint=http://10.10.103.12:425 \
+            --conf spark.hadoop.fs.s3a.access.key=9S0KLIQO7T2XCNGH4P4A \
+            --conf spark.hadoop.fs.s3a.secret.key=XKlE3EeEQ7MHsvz2O9AXuDEJJDyTFhhCcxSnxtk4 \
+            --conf spark.hadoop.fs.s3a.path.style.access=true \
+            --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
+            --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
+            --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+            --conf spark.hadoop.hadoop.security.authentication=simple \
+            --conf spark.hadoop.hadoop.security.authorization=false \
+            --conf spark.hadoop.fs.s3a.bucket.prd-bi-data-platform-test.secret.key=1NsEKbrullapyCrWZw4mbOnAG6yCyXrPK5M7KLEO \
+            --conf spark.hadoop.fs.s3a.bucket.prd-bi-data-platform-test.access.key=FY9PRV9EN12ACC5VZWBX \
+            --conf spark.hadoop.fs.s3a.bucket.prd-bi-data-platform-test.endpoint=http://10.10.103.253:80 \
+            --conf spark.hadoop.fs.s3a.bucket.prd-bi-data-platform-lake-refid-subaua-store-00.secret.key=1NsEKbrullapyCrWZw4mbOnAG6yCyXrPK5M7KLEO \
+            --conf spark.hadoop.fs.s3a.bucket.prd-bi-data-platform-lake-refid-subaua-store-00.access.key=FY9PRV9EN12ACC5VZWBX \
+            --conf spark.hadoop.fs.s3a.bucket.prd-bi-data-platform-lake-refid-subaua-store-00.endpoint=http://10.10.103.253:80 \
+            \
+            --conf spark.sql.warehouse.dir=s3a://prd-bi-data-platform-feature-resident360-00/iceberg/ \
+            --conf spark.local.dir=/data \
+            --conf spark.jars.ivy=/tmp/.ivy2 \
+            \
+            --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
+            --conf spark.sql.catalog.strot=org.apache.iceberg.spark.SparkCatalog \
+            --conf spark.sql.catalog.strot.type=hive \
+            --conf spark.sql.catalog.strot.uri=thrift://10.10.118.49:9083 \
+            --conf spark.sql.catalog.flink_stream=org.apache.iceberg.spark.SparkCatalog \
+            --conf spark.sql.catalog.flink_stream.type=hive \
+            --conf spark.sql.catalog.flink_stream.uri=thrift://10.10.118.15:9083 \
+            --conf spark.sql.catalog.warm_store=org.apache.iceberg.spark.SparkCatalog \
+            --conf spark.sql.catalog.warm_store.type=hive \
+            --conf spark.sql.catalog.warm_store.uri=thrift://10.10.118.2:9083 \
+            --conf "spark.sql.catalog.strot.table-default.format-version=3" \
+            --conf "spark.sql.catalog.strot.table-default.write.delete.mode=merge-on-read" \
+            --conf "spark.sql.catalog.strot.table-default.write.update.mode=merge-on-read" \
+            --conf "spark.sql.catalog.strot.table-default.write.merge.mode=merge-on-read" \
+            --conf "spark.sql.catalog.strot.table-default.write.format.default=parquet" \
+            --conf "spark.sql.catalog.strot.table-default.write.parquet.compression-codec=zstd" \
+            --conf "spark.sql.catalog.strot.table-default.write.parquet.compression-level=3" \
+            --conf "spark.sql.catalog.strot.table-default.write.target-file-size-bytes=536870912" \
+            --conf "spark.sql.catalog.strot.table-default.write.parquet.row-group-size-bytes=134217728" \
+            --conf "spark.sql.catalog.strot.table-default.write.metadata.delete-after-commit.enabled=true" \
+            --conf "spark.sql.catalog.strot.table-default.write.metadata.previous-versions-max=10" \
+            --conf "spark.sql.catalog.strot.table-default.history.expire.min-snapshots-to-keep=3" \
+            --conf "spark.sql.catalog.strot.table-default.history.expire.max-snapshot-age-ms=604800000" \
+            \
+            --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
+            --conf spark.kryo.referenceTracking=false \
+            --conf spark.kryoserializer.buffer.max=512m \
+            --conf spark.io.compression.codec=zstd \
+            --conf spark.io.compression.zstd.level=3 \
+            --conf spark.reducer.maxSizeInFlight=128m \
+            --conf spark.reducer.maxReqsInFlight=16 \
+            --conf spark.reducer.maxBlocksInFlightPerAddress=128 \
+            --conf spark.shuffle.file.buffer=128k \
+            --conf spark.shuffle.file.merger.buffer=64m \
+            --conf spark.default.parallelism=400 \
+            --conf spark.rpc.message.maxSize=1024 \
+            --conf spark.sql.shuffle.partitions=1000 \
+            --conf spark.sql.adaptive.enabled=true \
+            --conf spark.sql.adaptive.skewJoin.enabled=true \
+            --conf spark.sql.autoBroadcastJoinThreshold=209715200 \
+            --conf spark.sql.adaptive.coalescePartitions.enabled=true \
+            \ 
+            --conf spark.kubernetes.executor.podTemplateFile=s3a://prd-bi-data-platform-uploads/sparkjobs/cdc-jobs/executor.yaml \
+            --conf spark.shuffle.sort.io.plugin.class=org.apache.spark.shuffle.KubernetesLocalDiskShuffleDataIO \
+            --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.spark-local-dir-1.options.claimName=OnDemand \
+            --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.spark-local-dir-1.options.storageClass=ceph-xfs \
+            --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.spark-local-dir-1.options.accessModes=ReadWriteOnce \
+            --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.spark-local-dir-1.options.sizeLimit=128Gi \
+            --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.spark-local-dir-1.mount.path=/data \
+            --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.spark-local-dir-1.mount.readOnly=false \
+            \
+            --conf spark.ui.prometheus.enabled=true \
+            \
+            --jars local:///opt/spark/jars/dataflint-spark4_2.13-0.9.9.jar,local:///opt/spark/jars/hadoop-aws-3.4.1.jar,local:///opt/spark/jars/iceberg-spark-runtime-4.0_2.13-1.10.1.jar,local:///opt/spark/jars/mysql-connector-java-8.0.30.jar \
+            spark-internal
+        ports:
+        - containerPort: 15002
+          name: grpc
+        - containerPort: 4040
+          name: spark-ui
+        - containerPort: 7078
+          name: driver
+        - containerPort: 7079
+          name: block-manager
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+          limits:
+            cpu: "2"
+            memory: "12Gi"
+        env:
+        - name: HOME
+          value: /opt/spark/work-dir
+        - name: KUBECONFIG
+          value: /opt/spark/conf/kubeconfig-hdc-dp
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: spark-driver-local-dir
+          mountPath: /data
+        - name: kubeconfig-volume
+          mountPath: /opt/spark/conf
+          readOnly: true
+
+      # --- Metrics Sidecar Container ---
+      - name: metrics-proxy
+        image: hbdc-harbor-registry-prod.uidai.net.in/base/python:3.12-alpine
+        command:
+        - python3
+        - -c
+        - |
+          import http.server, socketserver, urllib.request
+          class H(http.server.BaseHTTPRequestHandler):
+              def do_GET(self):
+                  try:
+                      req = urllib.request.urlopen('http://localhost:4040/metrics/executors/prometheus/', timeout=60)
+                      d = req.read()
+                      self.send_response(200)
+                      self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                      self.end_headers()
+                      self.wfile.write(d)
+                  except Exception as e:
+                      self.send_response(503)
+                      self.end_headers()
+                      self.wfile.write(str(e).encode())
+
+          socketserver.ThreadingTCPServer.allow_reuse_address = True
+          socketserver.ThreadingTCPServer(('', 9090), H).serve_forever()
+        ports:
+        - containerPort: 9090
+          name: prom
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+      volumes:
+      - name: kubeconfig-volume
+        configMap:
+          name: kubeconfig-hdc-dp
+      - name: spark-driver-local-dir
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes: [ "ReadWriteOnce" ]
+              storageClassName: "ceph-xfs"
+              resources:
+                requests:
+                  storage: 64Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-connect-service
+  namespace: strot-spark
+  labels:
+    app: spark-connect
+spec:
+  ports:
+  - port: 15002
+    targetPort: 15002
+    name: grpc
+  - port: 4040
+    targetPort: 4040
+    name: ui
+  - port: 9090
+    targetPort: 9090
+    name: prom
+  selector:
+    app: spark-connect
+  type: LoadBalancer
+  loadBalancerIP: 10.10.118.55
